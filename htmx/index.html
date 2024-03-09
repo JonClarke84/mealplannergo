@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Meal Planner with HTMX</title>
+</head>
+<body>
+    <h1>Meal Planner</h1>
+    <button hx-get="/generate" hx-target="#meal-plan-content">
+        Generate Meal Plan
+    </button>
+    <div id="meal-plan-content">
+      <!-- The response will be loaded here -->
+    </div>
+    <script src="./htmx.min.js"></script>
+</body>
+</html>

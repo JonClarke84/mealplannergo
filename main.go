@@ -5,36 +5,27 @@ import (
 	"net/http"
 )
 
-func enableCors(w *http.ResponseWriter) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "*")
-	(*w).Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-	(*w).Header().Set("Access-Control-Allow-Headers", "*") // Allow all headers
+func getMealPlanHTML() string {
+	return `
+		<h1>Your Meal Plan</h1>
+		<ul>
+			<li>Saturday: Pasta</li>
+			<li>Sunday: Grilled Chicken</li>
+			<li>Monday: Tacos</li>
+			<li>Tuesday: Salmon</li>
+			<li>Wednesday: Curry</li>
+			<li>Thursday: Pizza</li>
+			<li>Friday: Burgers</li>
+			<li>Saturday: Soup</li>
+		</ul>
+	`
 }
 
 func main() {
+	http.Handle("/", http.FileServer(http.Dir("./htmx")))
 	http.HandleFunc("/generate", func(w http.ResponseWriter, r *http.Request) {
-		enableCors(&w)
-		mealPlanHTML := `
-<!DOCTYPE html>
-<html>
-<head>
-<title>Weekly Meal Plan</title>
-</head>
-<body>
-    <h1>Your Meal Plan</h1>
-    <ul>
-        <li>Saturday: Pasta</li>
-        <li>Sunday: Grilled Chicken</li>
-        <li>Monday: Tacos</li>
-        <li>Tuesday: Salmon</li>
-        <li>Wednesday: Curry</li>
-        <li>Thursday: Pizza</li>
-        <li>Friday: Burgers</li>
-        <li>Saturday: Soup</li>
-    </ul>
-</body>
-</html>
-`
+		// getShoppingListFromAI()
+		mealPlanHTML := getMealPlanHTML()
 		fmt.Fprint(w, mealPlanHTML)
 	})
 
