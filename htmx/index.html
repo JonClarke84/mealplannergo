@@ -3,12 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <title>Meal Planner with HTMX</title>
+    <!-- import ./index.css for style -->
+    <link rel="stylesheet" href="./index.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <h1>Meal Planner</h1>
-    <button hx-get="/generate" hx-target="#meal-plan-content">
-        Generate Meal Plan
-    </button>
+    <ul>
+        <li>
+            <strong>Saturday</strong>
+            <div style="display: flex; align-items: center;" id="saturday">
+                <input type="text" name="meal" id="meal-saturday" style="flex-grow: 1;" />
+                <button
+                    hx-put="/saturday"
+                    hx-trigger="click"
+                    hx-include="#meal-saturday"
+                    hx-target="#saturday"
+                >+</button>
+            </div>
+        </li>
+        <li>
+            <strong>Sunday</strong>
+            <div>
+                <input />
+            </div>
+        <li>
+            <strong>Monday</strong>
+            <div>
+                <span>Children: </span><input />
+                <span>Grown ups: </span><input />
+            </div>
+        </li>
+        <li>
+            <strong>Tuesday</strong>
+            <div>
+                <span>Children: </span><input />
+                <span>Grown ups: </span><input />
+            </div>
+        </li>
+        <li>
+            <strong>Wednesday</strong>
+            <div>
+                <span>Children: </span><input />
+                <span>Grown ups: </span><input />
+            </div>
+        </li>
+        <li>
+            <strong>Thursday</strong>
+            <div>
+                <span>Children: </span><input />
+                <span>Grown ups: </span><input />
+            </div>
+        </li>
+        <li>
+            <strong>Friday</strong>
+            <div>
+                <span>Children: </span><input />
+                <span>Grown ups: </span><input />
+            </div>
+        </li>
+    </ul>
     <div id="meal-plan-content">
       <!-- The response will be loaded here -->
     </div>

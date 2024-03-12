@@ -2,31 +2,25 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 )
-
-func getMealPlanHTML() string {
-	return `
-		<h1>Your Meal Plan</h1>
-		<ul>
-			<li>Saturday: Pasta</li>
-			<li>Sunday: Grilled Chicken</li>
-			<li>Monday: Tacos</li>
-			<li>Tuesday: Salmon</li>
-			<li>Wednesday: Curry</li>
-			<li>Thursday: Pizza</li>
-			<li>Friday: Burgers</li>
-			<li>Saturday: Soup</li>
-		</ul>
-	`
-}
 
 func main() {
 	http.Handle("/", http.FileServer(http.Dir("./htmx")))
 	http.HandleFunc("/generate", func(w http.ResponseWriter, r *http.Request) {
-		// getShoppingListFromAI()
 		mealPlanHTML := getMealPlanHTML()
 		fmt.Fprint(w, mealPlanHTML)
+	})
+
+	http.HandleFunc("/saturday", func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			fmt.Printf("Error parsing form: %s\n", err)
+			return
+		}
+		meal := r.Form.Get("meal")
+		r.Header.Set("Content-Type", "text/html")
+		io.WriteString(w, fmt.Sprintf("<p>Saturday's Meal: %s</p>", meal))
 	})
 
 	fmt.Println("Server starting on port 8080...")
