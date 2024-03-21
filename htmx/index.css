@@ -20,6 +20,10 @@ h1 {
   font-size: 20px;
 }
 
+.container {
+  padding: 20px;
+}
+
 ul {
   list-style: none;
   padding: 0;
@@ -61,6 +65,10 @@ button {
   min-height: 36px;
 }
 
+.saved {
+  border-color: green;
+}
+
 button:hover {
   background: #e6e6e6;
 }
@@ -74,10 +82,6 @@ strong {
   margin-bottom: 4px;
   color: #333;
   font-size: 16px;
-}
-
-div {
-  margin-bottom: 4px;
 }
 
 input {

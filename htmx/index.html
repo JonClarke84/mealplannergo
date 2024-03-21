@@ -8,60 +8,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <ul>
-        <li>
-            <strong>Saturday</strong>
-            <div style="display: flex; align-items: center;" id="saturday">
-                <input type="text" name="meal" id="meal-saturday" style="flex-grow: 1;" />
-                <button
-                    hx-put="/saturday"
-                    hx-trigger="click"
-                    hx-include="#meal-saturday"
-                    hx-target="#saturday"
-                >+</button>
-            </div>
-        </li>
-        <li>
-            <strong>Sunday</strong>
-            <div>
-                <input />
-            </div>
-        <li>
-            <strong>Monday</strong>
-            <div>
-                <span>Children: </span><input />
-                <span>Grown ups: </span><input />
-            </div>
-        </li>
-        <li>
-            <strong>Tuesday</strong>
-            <div>
-                <span>Children: </span><input />
-                <span>Grown ups: </span><input />
-            </div>
-        </li>
-        <li>
-            <strong>Wednesday</strong>
-            <div>
-                <span>Children: </span><input />
-                <span>Grown ups: </span><input />
-            </div>
-        </li>
-        <li>
-            <strong>Thursday</strong>
-            <div>
-                <span>Children: </span><input />
-                <span>Grown ups: </span><input />
-            </div>
-        </li>
-        <li>
-            <strong>Friday</strong>
-            <div>
-                <span>Children: </span><input />
-                <span>Grown ups: </span><input />
-            </div>
-        </li>
-    </ul>
+    <div class="container">
+        <ul>
+            <li>
+                <strong>Saturday</strong>
+                <div style="display: flex; align-items: center;" id="meal-saturday-container">
+                    <input type="text" name="meal-saturday" id="saturday-input" style="flex-grow: 1;" />
+                    <button
+                        hx-post="/meal"
+                        hx-trigger="click"
+                        hx-include="#saturday-input"
+                        hx-target="#meal-saturday-container"
+                    >💾</button>
+                </div>
+            </li>
+        </ul>
+    </div>
     <div id="meal-plan-content">
       <!-- The response will be loaded here -->
     </div>

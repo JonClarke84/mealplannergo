@@ -8,19 +8,37 @@ import (
 
 func main() {
 	http.Handle("/", http.FileServer(http.Dir("./htmx")))
-	http.HandleFunc("/generate", func(w http.ResponseWriter, r *http.Request) {
-		mealPlanHTML := getMealPlanHTML()
-		fmt.Fprint(w, mealPlanHTML)
-	})
 
-	http.HandleFunc("/saturday", func(w http.ResponseWriter, r *http.Request) {
+	// http.HandleFunc("/generate", func(w http.ResponseWriter, r *http.Request) {
+	// 	mealPlanHTML := getMealPlanHTML()
+	// 	fmt.Fprint(w, mealPlanHTML)
+	// })
+
+	http.HandleFunc("/meal", func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
 			fmt.Printf("Error parsing form: %s\n", err)
 			return
 		}
-		meal := r.Form.Get("meal")
+
+		var key string
+		var value string
+		for k, v := range r.PostForm {
+			key = k
+			value = v[0]
+			break
+		}
+
 		r.Header.Set("Content-Type", "text/html")
-		io.WriteString(w, fmt.Sprintf("<p>Saturday's Meal: %s</p>", meal))
+		io.WriteString(w, fmt.Sprintf(
+			"<input type='text' name='%s' id='%s-input' style='flex-grow: 1;' value='%s' />"+
+				"<button "+
+				"class='saved' "+
+				"hx-post='/meal' "+
+				"hx-trigger='click' "+
+				"hx-include='#%s-input' "+
+				"hx-target='#%s-container' "+
+				">💾</button>",
+			key, key, value, key, key))
 	})
 
 	fmt.Println("Server starting on port 8080...")
