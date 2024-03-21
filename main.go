@@ -10,10 +10,22 @@ import (
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		type PageData struct {
-			SaturdayMeal string
+			SaturdayMeal  string
+			SundayMeal    string
+			MondayMeal    string
+			TuesdayMeal   string
+			WednesdayMeal string
+			ThursdayMeal  string
+			FridayMeal    string
 		}
 		data := PageData{
-			SaturdayMeal: "Pizza",
+			SaturdayMeal:  "Pizza",
+			SundayMeal:    "Burgers",
+			MondayMeal:    "Tacos",
+			TuesdayMeal:   "Spaghetti",
+			WednesdayMeal: "Chicken",
+			ThursdayMeal:  "Salad",
+			FridayMeal:    "Soup",
 		}
 
 		template, err := template.ParseFiles("./htmx/index.html")

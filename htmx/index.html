@@ -21,6 +21,78 @@
                     >💾</button>
                 </div>
             </li>
+            <li>
+                <strong>Sunday</strong>
+                <div style="display: flex; align-items: center;" id="meal-sunday-container">
+                    <input type="text" name="meal-sunday" id="sunday-input" style="flex-grow: 1;" value="{{.SundayMeal}}" />
+                    <button
+                        hx-post="/meal"
+                        hx-trigger="click"
+                        hx-include="#sunday-input"
+                        hx-target="#meal-sunday-container"
+                    >💾</button>
+                </div>
+            </li>
+            <li>
+                <strong>Monday</strong>
+                <div style="display: flex; align-items: center;" id="meal-monday-container">
+                    <input type="text" name="meal-monday" id="monday-input" style="flex-grow: 1;" value="{{.MondayMeal}}" />
+                    <button
+                        hx-post="/meal"
+                        hx-trigger="click"
+                        hx-include="#monday-input"
+                        hx-target="#meal-monday-container"
+                    >💾</button>
+                </div>
+            </li>
+            <li>
+                <strong>Tuesday</strong>
+                <div style="display: flex; align-items: center;" id="meal-tuesday-container">
+                    <input type="text" name="meal-tuesday" id="tuesday-input" style="flex-grow: 1;" value="{{.TuesdayMeal}}" />
+                    <button
+                        hx-post="/meal"
+                        hx-trigger="click"
+                        hx-include="#tuesday-input"
+                        hx-target="#meal-tuesday-container"
+                    >💾</button>
+                </div>
+            </li>
+            <li>
+                <strong>Wednesday</strong>
+                <div style="display: flex; align-items: center;" id="meal-wednesday-container">
+                    <input type="text" name="meal-wednesday" id="wednesday-input" style="flex-grow: 1;" value="{{.WednesdayMeal}}" />
+                    <button
+                        hx-post="/meal"
+                        hx-trigger="click"
+                        hx-include="#wednesday-input"
+                        hx-target="#meal-wednesday-container"
+                    >💾</button>
+                </div>
+            </li>
+            <li>
+                <strong>Thursday</strong>
+                <div style="display: flex; align-items: center;" id="meal-thursday-container">
+                    <input type="text" name="meal-thursday" id="thursday-input" style="flex-grow: 1;" value="{{.ThursdayMeal}}" />
+                    <button
+                        hx-post="/meal"
+                        hx-trigger="click"
+                        hx-include="#thursday-input"
+                        hx-target="#meal-thursday-container"
+                    >💾</button>
+                </div>
+            </li>
+            <li>
+                <strong>Friday</strong>
+                <div style="display: flex; align-items: center;" id="meal-friday-container">
+                    <input type="text" name="meal-friday" id="friday-input" style="flex-grow: 1;" value="{{.FridayMeal}}" />
+                    <button
+                        hx-post="/meal"
+                        hx-trigger="click"
+                        hx-include="#friday-input"
+                        hx-target="#meal-friday-container"
+                    >💾</button>
+                </div>
+            </li>
         </ul>
     </div>
     <div id="meal-plan-content">
