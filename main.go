@@ -2,17 +2,33 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"io"
 	"net/http"
 )
 
 func main() {
-	http.Handle("/", http.FileServer(http.Dir("./htmx")))
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		type PageData struct {
+			SaturdayMeal string
+		}
+		data := PageData{
+			SaturdayMeal: "Pizza",
+		}
 
-	// http.HandleFunc("/generate", func(w http.ResponseWriter, r *http.Request) {
-	// 	mealPlanHTML := getMealPlanHTML()
-	// 	fmt.Fprint(w, mealPlanHTML)
-	// })
+		template, err := template.ParseFiles("./htmx/index.html")
+
+		if err != nil {
+			fmt.Printf("Error parsing template: %s\n", err)
+			return
+		}
+
+		err = template.Execute(w, data)
+		if err != nil {
+			fmt.Printf("Error executing template: %s\n", err)
+			return
+		}
+	})
 
 	http.HandleFunc("/meal", func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {

@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Meal Planner with HTMX</title>
-    <!-- import ./index.css for style -->
     <link rel="stylesheet" href="./index.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
@@ -13,7 +12,7 @@
             <li>
                 <strong>Saturday</strong>
                 <div style="display: flex; align-items: center;" id="meal-saturday-container">
-                    <input type="text" name="meal-saturday" id="saturday-input" style="flex-grow: 1;" />
+                    <input type="text" name="meal-saturday" id="saturday-input" style="flex-grow: 1;" value="{{.SaturdayMeal}}" />
                     <button
                         hx-post="/meal"
                         hx-trigger="click"
@@ -30,3 +29,4 @@
     <script src="./htmx.min.js"></script>
 </body>
 </html>
+
