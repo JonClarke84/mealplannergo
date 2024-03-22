@@ -1,46 +1,58 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"html/template"
 	"io"
 	"net/http"
+	"os"
+
+	"github.com/joho/godotenv"
 )
 
+func serveTemplate(w http.ResponseWriter, thisWeeksMeals MealList) {
+	tmpl, err := template.ParseFiles("templates/index.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// execute the template
+	if err := tmpl.Execute(w, thisWeeksMeals); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
 func main() {
+	// load env
+	if err := godotenv.Load(); err != nil {
+		fmt.Printf("Error loading .env file: %s\n", err)
+		return
+	}
+
+	// db
+	MONGO_URI := os.Getenv("MONGO_URI")
+
+	client, err := db(MONGO_URI)
+	if err != nil {
+		fmt.Printf("Error connecting to MongoDB: %s\n", err)
+		return
+	}
+
+	defer client.Disconnect(context.TODO())
+
+	// routes
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		type PageData struct {
-			SaturdayMeal  string
-			SundayMeal    string
-			MondayMeal    string
-			TuesdayMeal   string
-			WednesdayMeal string
-			ThursdayMeal  string
-			FridayMeal    string
-		}
-		data := PageData{
-			SaturdayMeal:  "Pizza",
-			SundayMeal:    "Burgers",
-			MondayMeal:    "Tacos",
-			TuesdayMeal:   "Spaghetti",
-			WednesdayMeal: "Chicken",
-			ThursdayMeal:  "Salad",
-			FridayMeal:    "Soup",
-		}
-
-		template, err := template.ParseFiles("./htmx/index.html")
-
+		thisWeeksMeals, err := getThisWeeksMeals(client)
 		if err != nil {
-			fmt.Printf("Error parsing template: %s\n", err)
+			fmt.Printf("Error getting this week's meals: %s\n", err)
 			return
 		}
-
-		err = template.Execute(w, data)
-		if err != nil {
-			fmt.Printf("Error executing template: %s\n", err)
-			return
-		}
+		serveTemplate(w, thisWeeksMeals)
 	})
+
+	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public/"))))
 
 	http.HandleFunc("/meal", func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
@@ -56,7 +68,7 @@ func main() {
 			break
 		}
 
-		r.Header.Set("Content-Type", "text/html")
+		w.Header().Set("Content-Type", "text/html")
 		io.WriteString(w, fmt.Sprintf(
 			"<input type='text' name='%s' id='%s-input' style='flex-grow: 1;' value='%s' />"+
 				"<button "+
@@ -69,6 +81,7 @@ func main() {
 			key, key, value, key, key))
 	})
 
+	// start server
 	fmt.Println("Server starting on port 8080...")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		fmt.Printf("Error starting server: %s\n", err)
