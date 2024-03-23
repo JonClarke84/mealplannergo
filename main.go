@@ -68,6 +68,8 @@ func main() {
 			break
 		}
 
+		defer updateMeal(client, key, value)
+
 		w.Header().Set("Content-Type", "text/html")
 		io.WriteString(w, fmt.Sprintf(
 			"<input type='text' name='%s' id='%s-input' style='flex-grow: 1;' value='%s' />"+

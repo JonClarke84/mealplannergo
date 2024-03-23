@@ -50,3 +50,16 @@ func getThisWeeksMeals(client *mongo.Client) (MealList, error) {
 	}
 	return mealList, nil
 }
+
+func updateMeal(client *mongo.Client, day string, meal string) error {
+	// update the document
+	collection := client.Database("GoShopping").Collection("shopping-lists")
+	filter := bson.D{{}}
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: day, Value: meal}}}}
+	_, err := collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		fmt.Printf("Error updating document: %s\n", err)
+		return err
+	}
+	return nil
+}
