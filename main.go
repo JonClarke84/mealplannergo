@@ -7,8 +7,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-
-	_ "github.com/joho/godotenv/autoload"
 )
 
 func serveTemplate(w http.ResponseWriter, thisWeeksMeals MealList) {
@@ -34,11 +32,13 @@ func main() {
 	// }
 
 	// db
-	MONGO_URI := os.Getenv("MONGO_URI")
+	MONGO_URI := os.Getenv("GO_SHOPPING_MONGO_ATLAS_URI")
+
+	fmt.Print("MONGO_URI:", MONGO_URI)
 
 	client, err := db(MONGO_URI)
 	if err != nil {
-		fmt.Printf("Error connecting to MongoDB: %s\n", err)
+		fmt.Printf("We have experienced an error connecting to MongoDB: %s\n", err)
 		return
 	}
 
