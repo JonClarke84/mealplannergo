@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/joho/godotenv"
+	_ "github.com/joho/godotenv/autoload"
 )
 
 func serveTemplate(w http.ResponseWriter, thisWeeksMeals MealList) {
@@ -26,12 +26,12 @@ func serveTemplate(w http.ResponseWriter, thisWeeksMeals MealList) {
 
 func main() {
 	// load env only in development
-	if os.Getenv("GO_ENV") != "production" {
-		if err := godotenv.Load(); err != nil {
-			fmt.Printf("Error loading .env file: %s\n", err)
-			return
-		}
-	}
+	// if os.Getenv("GO_ENV") != "production" {
+	// 	if err := godotenv.Load(); err != nil {
+	// 		fmt.Printf("Error loading .env file: %s\n", err)
+	// 		return
+	// 	}
+	// }
 
 	// db
 	MONGO_URI := os.Getenv("MONGO_URI")
