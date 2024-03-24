@@ -25,10 +25,12 @@ func serveTemplate(w http.ResponseWriter, thisWeeksMeals MealList) {
 }
 
 func main() {
-	// load env
-	if err := godotenv.Load(); err != nil {
-		fmt.Printf("Well, we have had an error loading .env file: %s\n", err)
-		return
+	// load env only in development
+	if os.Getenv("GO_ENV") != "production" {
+		if err := godotenv.Load(); err != nil {
+			fmt.Printf("Error loading .env file: %s\n", err)
+			return
+		}
 	}
 
 	// db
