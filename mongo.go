@@ -36,9 +36,10 @@ type MealList struct {
 	WednesdayMeal string
 	ThursdayMeal  string
 	FridayMeal    string
+	ShoppingList  []string
 }
 
-func getThisWeeksMeals(client *mongo.Client) (MealList, error) {
+func getNewestList(client *mongo.Client) (MealList, error) {
 	// find the first document in the collection
 	collection := client.Database("GoShopping").Collection("shopping-lists")
 	filter := bson.D{{}}
@@ -59,6 +60,19 @@ func updateMeal(client *mongo.Client, day string, meal string) error {
 	_, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
 		fmt.Printf("Error updating document: %s\n", err)
+		return err
+	}
+	return nil
+}
+
+func deleteShoppingListItem(client *mongo.Client, item string) error {
+	// delete an item from the shopping list
+	collection := client.Database("GoShopping").Collection("shopping-lists")
+	filter := bson.D{{}}
+	update := bson.D{{Key: "$pull", Value: bson.D{{Key: "shoppingList", Value: item}}}}
+	_, err := collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		fmt.Printf("Error deleting item: %s\n", err)
 		return err
 	}
 	return nil

@@ -8,6 +8,7 @@
 </head>
 <body>
     <div class="container">
+        <h1>Meal Planner</h1>
         <ul>
             <li>
                 <strong>Saturday</strong>
@@ -94,9 +95,29 @@
                 </div>
             </li>
         </ul>
-    </div>
-    <div id="meal-plan-content">
-      <!-- The response will be loaded here -->
+        <h1>Shopping List</h1>
+        <div>
+            <ul id="shopping-list">
+                {{range .ShoppingList}}
+                <li id="{{.}}-list-item">
+                    <div style="display: flex; align-items: center;">
+                        <input class="shopping-list-item" type="text" id="{{.}}" value="{{.}}" style="flex-grow: 1;" />
+                        <button
+                            hx-put="/shopping-list-item"
+                            hx-trigger="click"
+                            hx-include="#{{.}}"
+                            hx-target="#{{.}}"
+                        >💾</button>
+                        <button
+                            hx-delete="/shopping-list-item/{{.}}"
+                            hx-trigger="click"
+                            hx-include="previous .shopping-list-item"
+                        >❌</button>
+                    </div>
+                </li>
+                {{end}}
+            </ul>
+        </div>
     </div>
     <script src="public/htmx.min.js"></script>
 </body>

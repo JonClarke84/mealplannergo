@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-func serveTemplate(w http.ResponseWriter, thisWeeksMeals MealList) {
+func serveTemplate(w http.ResponseWriter, newestList MealList) {
 	tmpl, err := template.ParseFiles("templates/index.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -17,41 +17,29 @@ func serveTemplate(w http.ResponseWriter, thisWeeksMeals MealList) {
 	}
 
 	// execute the template
-	if err := tmpl.Execute(w, thisWeeksMeals); err != nil {
+	if err := tmpl.Execute(w, newestList); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 func main() {
-	// load env only in development
-	// if os.Getenv("GO_ENV") != "production" {
-	// 	if err := godotenv.Load(); err != nil {
-	// 		fmt.Printf("Error loading .env file: %s\n", err)
-	// 		return
-	// 	}
-	// }
-
 	// db
 	MONGO_URI := os.Getenv("GO_SHOPPING_MONGO_ATLAS_URI")
 
-	fmt.Print("MONGO_URI:", MONGO_URI)
-
 	client, err := db(MONGO_URI)
 	if err != nil {
-		fmt.Printf("We have experienced an error connecting to MongoDB: %s\n", err)
+		fmt.Printf("We have experienced an error connecting to MongoDB, shutting down the server: %s\n", err)
 		return
 	}
 
-	defer client.Disconnect(context.TODO())
-
 	// routes
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		thisWeeksMeals, err := getThisWeeksMeals(client)
+		newestList, err := getNewestList(client)
 		if err != nil {
 			fmt.Printf("Error getting this week's meals: %s\n", err)
 			return
 		}
-		serveTemplate(w, thisWeeksMeals)
+		serveTemplate(w, newestList)
 	})
 
 	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public/"))))
@@ -70,7 +58,21 @@ func main() {
 			break
 		}
 
-		defer updateMeal(client, key, value)
+		if err := updateMeal(client, key, value); err != nil {
+			http.Error(w, "Failed to update meal", http.StatusInternalServerError)
+			io.WriteString(w, fmt.Sprintf(
+				"<input type='text' name='%s' id='%s-input' style='flex-grow: 1;' />"+
+					"<button "+
+					"class='failed' "+
+					"hx-post='/meal' "+
+					"hx-trigger='click' "+
+					"hx-include='#%s-input' "+
+					"hx-target='#%s-container' "+
+					">💾</button>"+
+					"<div class='error'>Failed to save %s: %s</div>",
+				key, key, value, key, key, value))
+			return
+		}
 
 		w.Header().Set("Content-Type", "text/html")
 		io.WriteString(w, fmt.Sprintf(
@@ -85,9 +87,26 @@ func main() {
 			key, key, value, key, key))
 	})
 
+	http.HandleFunc("/shopping-list-item/", func(w http.ResponseWriter, r *http.Request) {
+		item := r.URL.Path[len("/shopping-list-item/"):]
+
+		if err := deleteShoppingListItem(client, item); err != nil {
+			http.Error(w, "Failed to delete item", http.StatusInternalServerError)
+			io.WriteString(w, fmt.Sprintf(
+				"<div class='error'>Failed to delete %s: %s</div>",
+				item, err))
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	})
+
 	// start server
 	fmt.Println("Server starting on port 8080...")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		fmt.Printf("Error starting server: %s\n", err)
 	}
+
+	// close the database connection when done
+	defer client.Disconnect(context.TODO())
 }
