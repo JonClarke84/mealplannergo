@@ -96,27 +96,13 @@
             </li>
         </ul>
         <h1>Shopping List</h1>
-        <div>
-            <ul id="shopping-list">
-                {{range .ShoppingList}}
-                <li id="{{.}}-list-item">
-                    <div style="display: flex; align-items: center;">
-                        <input class="shopping-list-item" type="text" id="{{.}}" value="{{.}}" style="flex-grow: 1;" />
-                        <button
-                            hx-put="/shopping-list-item"
-                            hx-trigger="click"
-                            hx-include="#{{.}}"
-                            hx-target="#{{.}}"
-                        >💾</button>
-                        <button
-                            hx-delete="/shopping-list-item/{{.}}"
-                            hx-trigger="click"
-                            hx-include="previous .shopping-list-item"
-                        >❌</button>
-                    </div>
-                </li>
-                {{end}}
-            </ul>
+        <form id="shopping-list-form" hx-post="/shopping-list" hx-trigger="submit" hx-target="#shopping-list">
+            <input type="text" id="shopping-list-input" name="item" />
+            <button type="submit">➕</button>
+        </form>
+            </label>
+            <!-- replace itself on load -->
+            <ul hx-get="/shopping-list" hx-trigger="load" hx-swap="outerHTML"></ul>
         </div>
     </div>
     <script src="public/htmx.min.js"></script>

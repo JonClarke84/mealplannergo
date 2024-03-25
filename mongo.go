@@ -46,10 +46,36 @@ func getNewestList(client *mongo.Client) (MealList, error) {
 	var mealList MealList
 	err := collection.FindOne(context.Background(), filter).Decode(&mealList)
 	if err != nil {
-		fmt.Printf("Error finding document: %s\n", err)
+		fmt.Printf("Error finding meal list: %s\n", err)
 		return mealList, err
 	}
 	return mealList, nil
+}
+
+func getShoppingList(client *mongo.Client) ([]string, error) {
+	// find the first document in the collection
+	collection := client.Database("GoShopping").Collection("shopping-lists")
+	filter := bson.D{{}}
+	var mealList MealList
+	err := collection.FindOne(context.Background(), filter).Decode(&mealList)
+	if err != nil {
+		fmt.Printf("Error finding shopping list: %s\n", err)
+		return mealList.ShoppingList, err
+	}
+	return mealList.ShoppingList, nil
+}
+
+func addShoppingListItem(client *mongo.Client, item string) error {
+	// add an item to the shopping list
+	collection := client.Database("GoShopping").Collection("shopping-lists")
+	filter := bson.D{{}}
+	update := bson.D{{Key: "$push", Value: bson.D{{Key: "ShoppingList", Value: item}}}}
+	_, err := collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		fmt.Printf("Error adding shopping list item: %s\n", err)
+		return err
+	}
+	return nil
 }
 
 func updateMeal(client *mongo.Client, day string, meal string) error {
@@ -59,7 +85,7 @@ func updateMeal(client *mongo.Client, day string, meal string) error {
 	update := bson.D{{Key: "$set", Value: bson.D{{Key: day, Value: meal}}}}
 	_, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		fmt.Printf("Error updating document: %s\n", err)
+		fmt.Printf("Error updating meal: %s\n", err)
 		return err
 	}
 	return nil
@@ -69,10 +95,10 @@ func deleteShoppingListItem(client *mongo.Client, item string) error {
 	// delete an item from the shopping list
 	collection := client.Database("GoShopping").Collection("shopping-lists")
 	filter := bson.D{{}}
-	update := bson.D{{Key: "$pull", Value: bson.D{{Key: "shoppingList", Value: item}}}}
+	update := bson.D{{Key: "$pull", Value: bson.D{{Key: "ShoppingList", Value: item}}}}
 	_, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		fmt.Printf("Error deleting item: %s\n", err)
+		fmt.Printf("Error deleting shopping list item: %s\n", err)
 		return err
 	}
 	return nil
