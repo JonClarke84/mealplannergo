@@ -96,13 +96,31 @@
             </li>
         </ul>
         <h1>Shopping List</h1>
-        <form id="shopping-list-form" hx-post="/shopping-list" hx-trigger="submit" hx-target="#shopping-list">
-            <input type="text" id="shopping-list-input" name="item" />
-            <button type="submit">➕</button>
+        <form
+            id="shopping-list-form"
+            hx-post="/shopping-list"
+            hx-target="#shopping-list"
+            hx-swap="beforeend"
+        >
+            <div style="display: flex; align-items: center;">
+                <input type="text" id="shopping-list-input" name="item" style="flex-grow: 1;" />
+                <button type="submit">➕</button>
+            </div>
         </form>
             </label>
-            <!-- replace itself on load -->
-            <ul hx-get="/shopping-list" hx-trigger="load" hx-swap="outerHTML"></ul>
+            <ul id="shopping-list">
+                {{ range .ShoppingList }}
+                {{ block "shopping-list-item" . }}
+                    <li>
+                        <div style="display: flex; align-items: center;">
+                            <input class="shopping-list-item" type="text" id="{{.}}" value="{{.}}" style="flex-grow: 1;" />
+                            <button>💾</button>
+                            <button>❌</button>
+                        </div>
+                    </li>
+                {{ end }}
+                {{ end }}
+            </ul>
         </div>
     </div>
     <script src="public/htmx.min.js"></script>

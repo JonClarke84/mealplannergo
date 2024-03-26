@@ -116,7 +116,8 @@ func main() {
 				return
 			}
 			if r.Method == "POST" {
-				w.Header().Set("HX-Trigger", "newShoppingListItem")
+				tmpl := template.Must(template.ParseFiles("templates/index.html"))
+				tmpl.ExecuteTemplate(w, "shopping-list-item", item)
 			}
 			// respond 200 ok
 			w.WriteHeader(http.StatusOK)
