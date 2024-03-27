@@ -101,7 +101,6 @@ func main() {
 	})
 
 	http.HandleFunc("/shopping-list", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("Method: %s\n", r.Method)
 		if err := r.ParseForm(); err != nil {
 			fmt.Printf("Error parsing shopping list: %s\n", err)
 			return
@@ -109,49 +108,25 @@ func main() {
 
 		// CREATE
 		if r.Method == "POST" {
-			fmt.Println("Adding item to shopping list")
 			item := r.PostFormValue("item")
 			if err := addShoppingListItem(client, item); err != nil {
 				http.Error(w, "Failed to add item", http.StatusInternalServerError)
 				return
 			}
-			if r.Method == "POST" {
-				tmpl := template.Must(template.ParseFiles("templates/index.html"))
-				tmpl.ExecuteTemplate(w, "shopping-list-item", item)
+			tmpl := template.Must(template.ParseFiles("templates/index.html"))
+			tmpl.ExecuteTemplate(w, "shopping-list-item", item)
+		}
+
+		// DELETE
+		if r.Method == "DELETE" {
+			item := r.URL.Query().Get("shopping-list-item")
+			if err := deleteShoppingListItem(client, item); err != nil {
+				http.Error(w, "Failed to remove item", http.StatusInternalServerError)
+				return
 			}
 			// respond 200 ok
 			w.WriteHeader(http.StatusOK)
 		}
-
-		// READ
-		if r.Method == "GET" {
-			shoppingList, err := getShoppingList(client)
-			if err != nil {
-				fmt.Printf("Error getting shopping list: %s\n", err)
-				return
-			}
-			fmt.Printf("Shopping list: %v\n", shoppingList)
-			// print type of shoppingList
-			fmt.Printf("Type of shoppingList: %T\n", shoppingList)
-			serveShoppingListTemplate(w, shoppingList)
-		}
-	})
-
-	http.HandleFunc("/shopping-list-item/", func(w http.ResponseWriter, r *http.Request) {
-		item := r.URL.Path[len("/shopping-list-item/"):]
-
-		// UPDATE - TODO
-
-		// DELETE
-		if err := deleteShoppingListItem(client, item); err != nil {
-			http.Error(w, "Failed to delete item", http.StatusInternalServerError)
-			io.WriteString(w, fmt.Sprintf(
-				"<div class='error'>Failed to delete %s: %s</div>",
-				item, err))
-			return
-		}
-
-		w.WriteHeader(http.StatusOK)
 	})
 
 	// start server

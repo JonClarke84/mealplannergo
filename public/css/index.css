@@ -98,3 +98,13 @@ span {
   display: block;
   margin-bottom: 4px;
 }
+
+.shopping-list-form-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #ffffff;
+  border: 1px solid #ddd;
+  padding: 8px;
+  margin-bottom: 8px;
+}

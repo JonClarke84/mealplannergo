@@ -96,27 +96,44 @@
             </li>
         </ul>
         <h1>Shopping List</h1>
-        <form
-            id="shopping-list-form"
-            hx-post="/shopping-list"
-            hx-target="#shopping-list"
-            hx-swap="beforeend"
-        >
-            <div style="display: flex; align-items: center;">
-                <input type="text" id="shopping-list-input" name="item" style="flex-grow: 1;" />
-                <button type="submit">➕</button>
-            </div>
-        </form>
-            </label>
+        <div>
+            <form
+                id="shopping-list-form"
+                hx-post="/shopping-list"
+                hx-target="#shopping-list"
+                hx-swap="beforeend"
+            >
+                <div
+                    style="display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 5px;
+                    background: #ffffff;
+                    border: 1px solid #ddd;
+                    padding: 8px;
+                    margin-bottom: 8px;"
+                >
+                    <input type="text" id="shopping-list-input" name="item" style="flex-grow: 1;" />
+                    <button type="submit">➕</button>
+                </div>
+            </form>
+        </div>
             <ul id="shopping-list">
                 {{ range .ShoppingList }}
                 {{ block "shopping-list-item" . }}
                     <li>
-                        <div style="display: flex; align-items: center;">
-                            <input class="shopping-list-item" type="text" id="{{.}}" value="{{.}}" style="flex-grow: 1;" />
-                            <button>💾</button>
-                            <button>❌</button>
-                        </div>
+                        <div
+                            style="display: flex; align-items: center;"
+                            >
+                            <input name="item" type="text" id="item-{{.}}" value="{{.}}" style="flex-grow: 1;" />
+                            <button
+                                hx-delete="/shopping-list?shopping-list-item={{.}}"
+                                hx-trigger="click"
+                                hx-target="closest li"
+                                hx-swap="outerHTML"
+                                type="submit"
+                            >❌</button>
+                    </div>
                     </li>
                 {{ end }}
                 {{ end }}
