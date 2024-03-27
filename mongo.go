@@ -77,6 +77,18 @@ func addShoppingListItem(client *mongo.Client, item string) error {
 	return nil
 }
 
+func updateShoppingListItem(client *mongo.Client, oldItem string, newItem string) error {
+	collection := client.Database("GoShopping").Collection("shopping-lists")
+	filter := bson.D{{Key: "ShoppingList", Value: oldItem}}
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: "ShoppingList.$", Value: newItem}}}}
+	_, err := collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		fmt.Printf("Error updating shopping list item: %s\n", err)
+		return err
+	}
+	return nil
+}
+
 func deleteShoppingListItem(client *mongo.Client, item string) error {
 	collection := client.Database("GoShopping").Collection("shopping-lists")
 	filter := bson.D{{Key: "ShoppingList", Value: item}}

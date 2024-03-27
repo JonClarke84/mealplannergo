@@ -117,6 +117,20 @@ func main() {
 			tmpl.ExecuteTemplate(w, "shopping-list-item", item)
 		}
 
+		// EDIT
+		if r.Method == "PUT" {
+			oldItem := r.URL.Query().Get("shopping-list-item")
+			newItem := r.PostFormValue("item")
+
+			if err := updateShoppingListItem(client, oldItem, newItem); err != nil {
+				http.Error(w, "Failed to update item", http.StatusInternalServerError)
+				return
+			}
+
+			tmpl := template.Must(template.ParseFiles("templates/index.html"))
+			tmpl.ExecuteTemplate(w, "shopping-list-item", newItem)
+		}
+
 		// DELETE
 		if r.Method == "DELETE" {
 			item := r.URL.Query().Get("shopping-list-item")

@@ -122,18 +122,26 @@
                 {{ range .ShoppingList }}
                 {{ block "shopping-list-item" . }}
                     <li>
-                        <div
-                            style="display: flex; align-items: center;"
+                        <form
+                            hx-put="/shopping-list?shopping-list-item={{.}}"
+                            hx-swap="outerHTML"
+                            hx-target="closest li"
+                        >
+                            <div
+                                style="display: flex; align-items: center;"
                             >
-                            <input name="item" type="text" id="item-{{.}}" value="{{.}}" style="flex-grow: 1;" />
-                            <button
+                                <input name="item" type="text" id="item-{{.}}" value="{{.}}" style="flex-grow: 1;" />
+                                <button
+                                    type="submit"
+                                >💾</button>
+                                <button
                                 hx-delete="/shopping-list?shopping-list-item={{.}}"
                                 hx-trigger="click"
                                 hx-target="closest li"
                                 hx-swap="outerHTML"
-                                type="submit"
-                            >❌</button>
-                    </div>
+                                >❌</button>
+                            </div>
+                        </form>
                     </li>
                 {{ end }}
                 {{ end }}
