@@ -118,10 +118,11 @@
                 </div>
             </form>
         </div>
-            <ul id="shopping-list">
+        {{ block "shopping-list" . }}
+        <ul id="shopping-list" class="sortable" hx-include="this" hx-swap="outerHTML" hx-post="/shopping-list/sort" hx-trigger="end">
                 {{ range .ShoppingList }}
                 {{ block "shopping-list-item" . }}
-                    <li>
+                    <li name="list" value="{{.}}">
                         <form
                             hx-put="/shopping-list?shopping-list-item={{.}}"
                             hx-swap="outerHTML"
@@ -130,25 +131,54 @@
                             <div
                                 style="display: flex; align-items: center;"
                             >
+                                <span>✋</span>
                                 <input name="item" type="text" id="item-{{.}}" value="{{.}}" style="flex-grow: 1;" />
                                 <button
                                     type="submit"
                                 >💾</button>
                                 <button
-                                hx-delete="/shopping-list?shopping-list-item={{.}}"
-                                hx-trigger="click"
-                                hx-target="closest li"
-                                hx-swap="outerHTML"
+                                    hx-delete="/shopping-list?shopping-list-item={{.}}"
+                                    hx-trigger="click"
+                                    hx-target="closest li"
+                                    hx-swap="outerHTML"
                                 >❌</button>
                             </div>
                         </form>
                     </li>
                 {{ end }}
                 {{ end }}
+            {{ end }}
             </ul>
         </div>
     </div>
     <script src="public/htmx.min.js"></script>
+    <!-- jsDelivr :: Sortable :: Latest (https://www.jsdelivr.com/package/npm/sortablejs) -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script>
+        function initializeSortable() {
+            var sortables = document.querySelectorAll(".sortable");
+            sortables.forEach(function(sortable) {
+                new Sortable(sortable, {
+                    animation: 150,
+                    ghostClass: 'blue-background-class',
+                    filter: ".htmx-indicator",
+                    onMove: function(evt) {
+                        return evt.related.className.indexOf('htmx-indicator') === -1;
+                    }
+                });
+            });
+        }
+
+        // Run on initial page load
+        initializeSortable();
+
+        // Re-run whenever HTMX swaps in new content
+        document.body.addEventListener('htmx:afterSwap', function(event) {
+            if (event.detail.target.id === 'shopping-list') {
+                initializeSortable();
+            }
+        });
+    </script>
 </body>
 </html>
 

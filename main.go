@@ -9,34 +9,8 @@ import (
 	"os"
 )
 
-func serveTemplate(w http.ResponseWriter, newestList MealList) {
-	tmpl, err := template.ParseFiles("templates/index.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// execute the template
-	if err := tmpl.Execute(w, newestList); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func serveShoppingListTemplate(w http.ResponseWriter, shoppingList []string) {
-	tmpl, err := template.ParseFiles("templates/shopping-list.html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// execute the template
-	if err := tmpl.Execute(w, shoppingList); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
 func main() {
-	// db
+	// client
 	MONGO_URI := os.Getenv("GO_SHOPPING_MONGO_ATLAS_URI")
 
 	client, err := db(MONGO_URI)
@@ -52,7 +26,16 @@ func main() {
 			fmt.Printf("Error getting this week's meals: %s\n", err)
 			return
 		}
-		serveTemplate(w, newestList)
+
+		tmpl, err := template.ParseFiles("templates/index.html")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if err := tmpl.Execute(w, newestList); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	})
 
 	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public/"))))
@@ -110,14 +93,14 @@ func main() {
 		if r.Method == "POST" {
 			item := r.PostFormValue("item")
 			if err := addShoppingListItem(client, item); err != nil {
-				http.Error(w, "Failed to add item", http.StatusInternalServerError)
+				http.Error(w, "Failed to create item", http.StatusInternalServerError)
 				return
 			}
 			tmpl := template.Must(template.ParseFiles("templates/index.html"))
 			tmpl.ExecuteTemplate(w, "shopping-list-item", item)
 		}
 
-		// EDIT
+		// UPDATE
 		if r.Method == "PUT" {
 			oldItem := r.URL.Query().Get("shopping-list-item")
 			newItem := r.PostFormValue("item")
@@ -135,12 +118,40 @@ func main() {
 		if r.Method == "DELETE" {
 			item := r.URL.Query().Get("shopping-list-item")
 			if err := deleteShoppingListItem(client, item); err != nil {
-				http.Error(w, "Failed to remove item", http.StatusInternalServerError)
+				http.Error(w, "Failed to delete item", http.StatusInternalServerError)
 				return
 			}
 			// respond 200 ok
 			w.WriteHeader(http.StatusOK)
 		}
+	})
+
+	http.HandleFunc("/shopping-list/sort", func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			fmt.Printf("Error parsing shopping list: %s\n", err)
+			return
+		}
+		newItemOrder := r.PostForm["item"]
+		if err := sortShoppingList(client, newItemOrder); err != nil {
+			http.Error(w, "Failed to sort shopping list", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("HX-Trigger", "shopping-list-sorted")
+		w.Header().Set("Content-Type", "text/html")
+
+		newestList, err := getNewestList(client)
+		if err != nil {
+			fmt.Printf("Error getting this week's meals: %s\n", err)
+			return
+		}
+
+		tmpl, err := template.ParseFiles("templates/index.html")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		tmpl.ExecuteTemplate(w, "shopping-list", newestList)
 	})
 
 	// start server

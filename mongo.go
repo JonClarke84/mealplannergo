@@ -100,3 +100,15 @@ func deleteShoppingListItem(client *mongo.Client, item string) error {
 	}
 	return nil
 }
+
+func sortShoppingList(client *mongo.Client, newItemOrder []string) error {
+	collection := client.Database("GoShopping").Collection("shopping-lists")
+	filter := bson.D{{}}
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: "ShoppingList", Value: newItemOrder}}}}
+	_, err := collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		fmt.Printf("Error sorting shopping list: %s\n", err)
+		return err
+	}
+	return nil
+}
