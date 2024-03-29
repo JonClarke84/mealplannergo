@@ -160,8 +160,10 @@
             sortables.forEach(function(sortable) {
                 new Sortable(sortable, {
                     animation: 150,
-                    ghostClass: 'blue-background-class',
+                    ghostClass: 'drag-ghost-class',
+                    dragClass: 'li-drag-class',
                     filter: ".htmx-indicator",
+                    forceFallback: true,
                     onMove: function(evt) {
                         return evt.related.className.indexOf('htmx-indicator') === -1;
                     }

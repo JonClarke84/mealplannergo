@@ -108,3 +108,12 @@ span {
   padding: 8px;
   margin-bottom: 8px;
 }
+
+.li-drag-class {
+  background: #ffffff;
+  opacity: 1 !important;
+}
+
+.drag-ghost-class {
+  opacity: 0.5 !important;
+}
