@@ -4,10 +4,32 @@ import (
 	"context"
 	"fmt"
 	"html/template"
-	"io"
 	"net/http"
 	"os"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+// types
+type ShoppingList struct {
+	ID           primitive.ObjectID `bson:"_id,omitempty"`
+	Date         *time.Time         `bson:"date,omitempty"`
+	ShoppingList []string           `bson:"ShoppingList"`
+}
+
+type Meal struct {
+	Day  string
+	Meal string
+}
+
+type MealPlan struct {
+	Meals []Meal
+}
+type PageData struct {
+	MealPlan     []Meal
+	ShoppingList []string
+}
 
 func main() {
 	// client
@@ -21,9 +43,15 @@ func main() {
 
 	// routes
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		newestList, err := getNewestList(client)
+		shoppingList, err := getShoppingList(client)
 		if err != nil {
 			fmt.Printf("Error getting this week's meals: %s\n", err)
+			return
+		}
+
+		mealPlan, err := getMealPlan(client)
+		if err != nil {
+			fmt.Printf("Error getting meal plan: %s\n", err)
 			return
 		}
 
@@ -33,9 +61,12 @@ func main() {
 			return
 		}
 
-		if err := tmpl.Execute(w, newestList); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		pageData := PageData{
+			MealPlan:     mealPlan.Meals,
+			ShoppingList: shoppingList.ShoppingList,
 		}
+
+		tmpl.Execute(w, pageData)
 	})
 
 	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public/"))))
@@ -56,31 +87,16 @@ func main() {
 
 		if err := updateMeal(client, key, value); err != nil {
 			http.Error(w, "Failed to update meal", http.StatusInternalServerError)
-			io.WriteString(w, fmt.Sprintf(
-				"<input type='text' name='%s' id='%s-input' style='flex-grow: 1;' />"+
-					"<button "+
-					"class='failed' "+
-					"hx-post='/meal' "+
-					"hx-trigger='click' "+
-					"hx-include='#%s-input' "+
-					"hx-target='#%s-container' "+
-					">💾</button>"+
-					"<div class='error'>Failed to save %s: %s</div>",
-				key, key, value, key, key, value))
 			return
 		}
 
-		w.Header().Set("Content-Type", "text/html")
-		io.WriteString(w, fmt.Sprintf(
-			"<input type='text' name='%s' id='%s-input' style='flex-grow: 1;' value='%s' />"+
-				"<button "+
-				"class='saved' "+
-				"hx-post='/meal' "+
-				"hx-trigger='click' "+
-				"hx-include='#%s-input' "+
-				"hx-target='#%s-container' "+
-				">💾</button>",
-			key, key, value, key, key))
+		updatedMeal := Meal{
+			Day:  key,
+			Meal: value,
+		}
+
+		tmpl := template.Must(template.ParseFiles("templates/index.html"))
+		tmpl.ExecuteTemplate(w, "meal-input", updatedMeal)
 	})
 
 	http.HandleFunc("/shopping-list", func(w http.ResponseWriter, r *http.Request) {
@@ -140,7 +156,7 @@ func main() {
 		w.Header().Set("HX-Trigger", "shopping-list-sorted")
 		w.Header().Set("Content-Type", "text/html")
 
-		newestList, err := getNewestList(client)
+		newestList, err := getShoppingList(client) // TODO - fix
 		if err != nil {
 			fmt.Printf("Error getting this week's meals: %s\n", err)
 			return

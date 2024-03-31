@@ -28,39 +28,27 @@ func db(uri string) (*mongo.Client, error) {
 	return client, nil
 }
 
-type MealList struct {
-	SaturdayMeal  string
-	SundayMeal    string
-	MondayMeal    string
-	TuesdayMeal   string
-	WednesdayMeal string
-	ThursdayMeal  string
-	FridayMeal    string
-	ShoppingList  []string
-}
-
-func getNewestList(client *mongo.Client) (MealList, error) {
+func getShoppingList(client *mongo.Client) (ShoppingList, error) {
 	// find the first document in the collection
 	collection := client.Database("GoShopping").Collection("shopping-lists")
+	// find first doc, it will be a struct with a ShoppingList key. pull that out into []string
 	filter := bson.D{{}}
-	var mealList MealList
-	err := collection.FindOne(context.Background(), filter).Decode(&mealList)
+	var shoppingList ShoppingList
+	err := collection.FindOne(context.Background(), filter).Decode(&shoppingList)
 	if err != nil {
-		fmt.Printf("Error finding meal list: %s\n", err)
-		return mealList, err
+		fmt.Printf("Error finding shopping list: %s\n", err)
+		return shoppingList, err
 	}
-	return mealList, nil
+	return shoppingList, nil
 }
 
 func updateMeal(client *mongo.Client, day string, meal string) error {
-	// update the document
-	collection := client.Database("GoShopping").Collection("shopping-lists")
-	filter := bson.D{{}}
-	update := bson.D{{Key: "$set", Value: bson.D{{Key: day, Value: meal}}}}
+	collection := client.Database("GoShopping").Collection("meal-plans")
+	filter := bson.D{{Key: "meals", Value: bson.D{{Key: "$elemMatch", Value: bson.D{{Key: "day", Value: day}}}}}}
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: "meals.$.meal", Value: meal}}}}
 	_, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
 		fmt.Printf("Error updating meal: %s\n", err)
-		return err
 	}
 	return nil
 }
@@ -111,4 +99,18 @@ func sortShoppingList(client *mongo.Client, newItemOrder []string) error {
 		return err
 	}
 	return nil
+}
+
+func getMealPlan(client *mongo.Client) (MealPlan, error) {
+	// find the first document in the collection
+	collection := client.Database("GoShopping").Collection("meal-plans")
+	// get the first document
+	filter := bson.D{{}}
+	var mealPlan MealPlan
+	err := collection.FindOne(context.Background(), filter).Decode(&mealPlan)
+	if err != nil {
+		fmt.Printf("Error finding meal plan: %s\n", err)
+		return mealPlan, err
+	}
+	return mealPlan, nil
 }

@@ -4,98 +4,45 @@
     <meta charset="UTF-8">
     <title>Meal Planner with HTMX</title>
     <link rel="stylesheet" href="public/css/index.css">
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script>
+        tailwind.config = {}
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
     <div class="container">
-        <h1>Meal Planner</h1>
+        <h1 class="text-3xl font-bold">Meal Planner</h1>
         <ul>
-            <li>
-                <strong>Saturday</strong>
-                <div style="display: flex; align-items: center;" id="SaturdayMeal-container">
-                    <input type="text" name="SaturdayMeal" id="saturday-input" style="flex-grow: 1;" value="{{.SaturdayMeal}}" />
-                    <button
-                        hx-post="/meal"
-                        hx-trigger="click"
-                        hx-include="#saturday-input"
-                        hx-target="#SaturdayMeal-container"
-                    >💾</button>
-                </div>
+            {{ range .MealPlan }}
+            {{ block "meal-input" . }}
+            <li class="relative mt-6" id="{{.Day}}-container">
+                <label
+                    for="{{.Day}}-input"
+                    class="relative block rounded-md border border-gray-200 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
+                >
+                    <input
+                    type="text"
+                    name="{{.Day}}"
+                    id="{{.Day}}-input"
+                    value="{{.Meal}}"
+                    placeholder="Start typing..."
+                    class="w-full peer border-none bg-transparent placeholder-transparent focus:border-transparent focus:outline-none focus:ring-0"
+                    hx-post="/meal"
+                    hx-trigger="keyup changed delay:1s"
+                    hx-target="#{{.Day}}-container"
+                    />
+                    <span
+                    class="pointer-events-none absolute start-2.5 top-0 -translate-y-1/2 p-0.5 text-xs text-gray-700 transition-all peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-focus:top-0 peer-focus:text-xs"
+                    >
+                        {{.Day}}
+                    </span>
+                </label>
+                {{ end }}
             </li>
-            <li>
-                <strong>Sunday</strong>
-                <div style="display: flex; align-items: center;" id="SundayMeal-container">
-                    <input type="text" name="SundayMeal" id="sunday-input" style="flex-grow: 1;" value="{{.SundayMeal}}" />
-                    <button
-                        hx-post="/meal"
-                        hx-trigger="click"
-                        hx-include="#sunday-input"
-                        hx-target="#SundayMeal-container"
-                    >💾</button>
-                </div>
-            </li>
-            <li>
-                <strong>Monday</strong>
-                <div style="display: flex; align-items: center;" id="MondayMeal-container">
-                    <input type="text" name="MondayMeal" id="monday-input" style="flex-grow: 1;" value="{{.MondayMeal}}" />
-                    <button
-                        hx-post="/meal"
-                        hx-trigger="click"
-                        hx-include="#monday-input"
-                        hx-target="#MondayMeal-container"
-                    >💾</button>
-                </div>
-            </li>
-            <li>
-                <strong>Tuesday</strong>
-                <div style="display: flex; align-items: center;" id="TuesdayMeal-container">
-                    <input type="text" name="TuesdayMeal" id="tuesday-input" style="flex-grow: 1;" value="{{.TuesdayMeal}}" />
-                    <button
-                        hx-post="/meal"
-                        hx-trigger="click"
-                        hx-include="#tuesday-input"
-                        hx-target="#TuesdayMeal-container"
-                    >💾</button>
-                </div>
-            </li>
-            <li>
-                <strong>Wednesday</strong>
-                <div style="display: flex; align-items: center;" id="meal-wednesday-container">
-                    <input type="text" name="WednesdayMeal" id="wednesday-input" style="flex-grow: 1;" value="{{.WednesdayMeal}}" />
-                    <button
-                        hx-post="/meal"
-                        hx-trigger="click"
-                        hx-include="#wednesday-input"
-                        hx-target="#meal-wednesday-container"
-                    >💾</button>
-                </div>
-            </li>
-            <li>
-                <strong>Thursday</strong>
-                <div style="display: flex; align-items: center;" id="ThursdayMeal-container">
-                    <input type="text" name="ThursdayMeal" id="thursday-input" style="flex-grow: 1;" value="{{.ThursdayMeal}}" />
-                    <button
-                        hx-post="/meal"
-                        hx-trigger="click"
-                        hx-include="#thursday-input"
-                        hx-target="#ThursdayMeal-container"
-                    >💾</button>
-                </div>
-            </li>
-            <li>
-                <strong>Friday</strong>
-                <div style="display: flex; align-items: center;" id="FridayMeal-container">
-                    <input type="text" name="FridayMeal" id="friday-input" style="flex-grow: 1;" value="{{.FridayMeal}}" />
-                    <button
-                        hx-post="/meal"
-                        hx-trigger="click"
-                        hx-include="#friday-input"
-                        hx-target="#FridayMeal-container"
-                    >💾</button>
-                </div>
-            </li>
+            {{ end }}
         </ul>
-        <h1>Shopping List</h1>
+         <h2 class="text-2xl font-bold m-4">Shopping List</h2>
         <div>
             <form
                 id="shopping-list-form"
@@ -113,13 +60,26 @@
                     padding: 8px;
                     margin-bottom: 8px;"
                 >
-                    <input type="text" id="shopping-list-input" name="item" style="flex-grow: 1;" />
+                    <input
+                        type="text"
+                        id="shopping-list-input"
+                        name="item"
+                        style="flex-grow: 1;"
+                        placeholder="Start typing..."
+                    />
                     <button type="submit">➕</button>
                 </div>
             </form>
         </div>
         {{ block "shopping-list" . }}
-        <ul id="shopping-list" class="sortable" hx-include="this" hx-swap="outerHTML" hx-post="/shopping-list/sort" hx-trigger="end">
+        <ul
+        id="shopping-list"
+        class="sortable"
+        hx-include="this"
+        hx-swap="outerHTML"
+        hx-post="/shopping-list/sort"
+        hx-trigger="end"
+        >
                 {{ range .ShoppingList }}
                 {{ block "shopping-list-item" . }}
                     <li name="list" value="{{.}}">
@@ -128,20 +88,32 @@
                             hx-swap="outerHTML"
                             hx-target="closest li"
                         >
-                            <div
-                                style="display: flex; align-items: center;"
-                            >
-                                <span>✋</span>
-                                <input name="item" type="text" id="item-{{.}}" value="{{.}}" style="flex-grow: 1;" />
-                                <button
-                                    type="submit"
-                                >💾</button>
-                                <button
-                                    hx-delete="/shopping-list?shopping-list-item={{.}}"
-                                    hx-trigger="click"
-                                    hx-target="closest li"
-                                    hx-swap="outerHTML"
-                                >❌</button>
+                            <div class="mt-2">
+                                <label
+                                    for="{{.}}"
+                                    class="flex items-center cursor-pointer items-start gap-4 rounded-lg border border-gray-200 p-2 bg-white transition hover:bg-gray-50"
+                                >
+                                    <div class="flex items-center">
+                                        &#8203;
+                                        <input type="checkbox" class="size-4 rounded border-gray-300" id="{{.}}" />
+                                    </div>
+                                    <input
+                                        name="item"
+                                        type="text"
+                                        id="item-{{.}}"
+                                        value="{{.}}"
+                                        class="mt-1 w-full rounded-md border-gray-200 shadow-sm sm:text-sm"
+                                    />
+                                    <button
+                                        type="submit"
+                                    >💾</button>
+                                    <button
+                                        hx-delete="/shopping-list?shopping-list-item={{.}}"
+                                        hx-trigger="click"
+                                        hx-target="closest li"
+                                        hx-swap="outerHTML"
+                                    >❌</button>
+                                </label>
                             </div>
                         </form>
                     </li>
@@ -149,7 +121,6 @@
                 {{ end }}
             {{ end }}
             </ul>
-        </div>
     </div>
     <script src="public/htmx.min.js"></script>
     <!-- jsDelivr :: Sortable :: Latest (https://www.jsdelivr.com/package/npm/sortablejs) -->
@@ -183,4 +154,3 @@
     </script>
 </body>
 </html>
-

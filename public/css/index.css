@@ -3,7 +3,6 @@
 *::after {
   box-sizing: border-box;
 }
-
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: #f7f7f7;
@@ -13,6 +12,7 @@ body {
   margin: 0;
 }
 
+/* 
 h1 {
   color: #0d6efd;
   text-align: center;
@@ -97,7 +97,7 @@ span {
   color: #555;
   display: block;
   margin-bottom: 4px;
-}
+} */
 
 .shopping-list-form-container {
   display: flex;
