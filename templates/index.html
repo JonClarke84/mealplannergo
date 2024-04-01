@@ -77,14 +77,17 @@
         <ul
             id="shopping-list"
             class="sortable"
-            hx-include="this"
             hx-post="/shopping-list/sort"
+            hx-include="this"
             hx-trigger="end"
+            hx-target="#shopping-list"
         >
             {{ range .ShoppingList }}
             {{ block "shopping-list-item" . }}
-            <li name="list" id="shopping-list-{{.}}">
-                <div class="mt-2" id="shopping-list-item-{{.}}">
+            <li
+                id="shopping-list-{{.}}"
+            >
+                <div class="mt-2 w-full" id="shopping-list-item-{{.}}">
                     <label
                         for="item-{{.}}"
                         class="flex items-center cursor-pointer items-start rounded-lg border border-gray-200 p-2 bg-white transition hover:bg-gray-50"
@@ -93,13 +96,15 @@
                             &#8203;
                             <input type="checkbox" class="size-6 rounded border-gray-300" id="{{.}}" />
                         </div>
-                        <form class="w-full">
+                        <form
+                            class="w-full"
+                        >
                             <input
                                 name="{{.}}"
                                 type="text"
                                 id="{{.}}"
                                 value="{{.}}"
-                                class="mt-1 w-full rounded-md border-gray-200 shadow-sm sm:text-sm"
+                                class="handle mt-1 w-full rounded-md border-gray-200 shadow-sm sm:text-sm"
                                 hx-post="/shopping-list/edit"
                                 hx-trigger="keyup changed delay:1s"
                                 hx-target="#shopping-list-item-{{.}}"
@@ -151,7 +156,7 @@
                     dragClass: 'li-drag-class',
                     filter: ".htmx-indicator",
                     forceFallback: true,
-
+                    handle: '.handle',
                     onMove: function(evt) {
                         return evt.related.className.indexOf('htmx-indicator') === -1;
                     }
