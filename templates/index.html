@@ -59,68 +59,84 @@
                     border: 1px solid #ddd;
                     padding: 8px;
                     margin-bottom: 8px;"
+                    class="flex items-center cursor-pointer items-start rounded-lg border border-gray-200 p-2 bg-white transition hover:bg-gray-50"
                 >
                     <input
                         type="text"
                         id="shopping-list-input"
                         name="item"
                         style="flex-grow: 1;"
-                        placeholder="Start typing..."
+                        placeholder="Start typing to add an item..."
+                        class="mt-1 w-full rounded-md border-gray-200 shadow-sm sm:text-sm"
                     />
-                    <button type="submit">➕</button>
+                    <button type="submit" class="flex justify-center hover:text-gray-700 w-10">➕</button>
                 </div>
             </form>
         </div>
         {{ block "shopping-list" . }}
         <ul
-        id="shopping-list"
-        class="sortable"
-        hx-include="this"
-        hx-swap="outerHTML"
-        hx-post="/shopping-list/sort"
-        hx-trigger="end"
+            id="shopping-list"
+            class="sortable"
+            hx-include="this"
+            hx-post="/shopping-list/sort"
+            hx-trigger="end"
         >
-                {{ range .ShoppingList }}
-                {{ block "shopping-list-item" . }}
-                    <li name="list" value="{{.}}">
-                        <form
-                            hx-put="/shopping-list?shopping-list-item={{.}}"
-                            hx-swap="outerHTML"
-                            hx-target="closest li"
-                        >
-                            <div class="mt-2">
-                                <label
-                                    for="{{.}}"
-                                    class="flex items-center cursor-pointer items-start gap-4 rounded-lg border border-gray-200 p-2 bg-white transition hover:bg-gray-50"
-                                >
-                                    <div class="flex items-center">
-                                        &#8203;
-                                        <input type="checkbox" class="size-4 rounded border-gray-300" id="{{.}}" />
-                                    </div>
-                                    <input
-                                        name="item"
-                                        type="text"
-                                        id="item-{{.}}"
-                                        value="{{.}}"
-                                        class="mt-1 w-full rounded-md border-gray-200 shadow-sm sm:text-sm"
-                                    />
-                                    <button
-                                        type="submit"
-                                    >💾</button>
-                                    <button
-                                        hx-delete="/shopping-list?shopping-list-item={{.}}"
-                                        hx-trigger="click"
-                                        hx-target="closest li"
-                                        hx-swap="outerHTML"
-                                    >❌</button>
-                                </label>
-                            </div>
+            {{ range .ShoppingList }}
+            {{ block "shopping-list-item" . }}
+            <li name="list" id="shopping-list-{{.}}">
+                <div class="mt-2" id="shopping-list-item-{{.}}">
+                    <label
+                        for="item-{{.}}"
+                        class="flex items-center cursor-pointer items-start rounded-lg border border-gray-200 p-2 bg-white transition hover:bg-gray-50"
+                    >
+                        <div class="flex items-center pl-4 pr-4">
+                            &#8203;
+                            <input type="checkbox" class="size-6 rounded border-gray-300" id="{{.}}" />
+                        </div>
+                        <form class="w-full">
+                            <input
+                                name="{{.}}"
+                                type="text"
+                                id="{{.}}"
+                                value="{{.}}"
+                                class="mt-1 w-full rounded-md border-gray-200 shadow-sm sm:text-sm"
+                                hx-post="/shopping-list/edit"
+                                hx-trigger="keyup changed delay:1s"
+                                hx-target="#shopping-list-item-{{.}}"
+                                hx-include="this"
+                            />
                         </form>
-                    </li>
-                {{ end }}
-                {{ end }}
+                        <div>
+                            <button
+                                type="button"
+                                class="flex justify-center hover:text-gray-700 w-10"
+                                hx-delete="/shopping-list?item={{.}}"
+                                hx-target="#shopping-list-{{.}}"
+                            >
+                                <span class="sr-only">Delete</span>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke-width="1.5"
+                                    stroke="currentColor"
+                                    class="h-4 w-4"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="M6 6l12 12m0 -12l-12 12"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                    </label>
+                </div>
+            </li>
             {{ end }}
-            </ul>
+            {{ end }}
+            {{ end }}
+        </ul>
     </div>
     <script src="public/htmx.min.js"></script>
     <!-- jsDelivr :: Sortable :: Latest (https://www.jsdelivr.com/package/npm/sortablejs) -->
@@ -135,6 +151,7 @@
                     dragClass: 'li-drag-class',
                     filter: ".htmx-indicator",
                     forceFallback: true,
+
                     onMove: function(evt) {
                         return evt.related.className.indexOf('htmx-indicator') === -1;
                     }

@@ -116,28 +116,14 @@ func main() {
 			tmpl.ExecuteTemplate(w, "shopping-list-item", item)
 		}
 
-		// UPDATE
-		if r.Method == "PUT" {
-			oldItem := r.URL.Query().Get("shopping-list-item")
-			newItem := r.PostFormValue("item")
-
-			if err := updateShoppingListItem(client, oldItem, newItem); err != nil {
-				http.Error(w, "Failed to update item", http.StatusInternalServerError)
-				return
-			}
-
-			tmpl := template.Must(template.ParseFiles("templates/index.html"))
-			tmpl.ExecuteTemplate(w, "shopping-list-item", newItem)
-		}
-
 		// DELETE
 		if r.Method == "DELETE" {
-			item := r.URL.Query().Get("shopping-list-item")
+			item := r.URL.Query().Get("item")
 			if err := deleteShoppingListItem(client, item); err != nil {
 				http.Error(w, "Failed to delete item", http.StatusInternalServerError)
 				return
 			}
-			// respond 200 ok
+
 			w.WriteHeader(http.StatusOK)
 		}
 	})
@@ -147,16 +133,19 @@ func main() {
 			fmt.Printf("Error parsing shopping list: %s\n", err)
 			return
 		}
-		newItemOrder := r.PostForm["item"]
-		if err := sortShoppingList(client, newItemOrder); err != nil {
+
+		var items []string
+
+		for _, v := range r.PostForm {
+			items = append(items, v...)
+		}
+
+		if err := sortShoppingList(client, items); err != nil {
 			http.Error(w, "Failed to sort shopping list", http.StatusInternalServerError)
 			return
 		}
 
-		w.Header().Set("HX-Trigger", "shopping-list-sorted")
-		w.Header().Set("Content-Type", "text/html")
-
-		newestList, err := getShoppingList(client) // TODO - fix
+		newestList, err := getShoppingList(client)
 		if err != nil {
 			fmt.Printf("Error getting this week's meals: %s\n", err)
 			return
@@ -168,6 +157,29 @@ func main() {
 			return
 		}
 		tmpl.ExecuteTemplate(w, "shopping-list", newestList)
+	})
+
+	http.HandleFunc("/shopping-list/edit", func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			fmt.Printf("Error parsing form: %s\n", err)
+			return
+		}
+
+		var oldItem string
+		var updatedItem string
+		for k, v := range r.PostForm {
+			oldItem = k
+			updatedItem = v[0]
+			break
+		}
+
+		if err := updateShoppingListItem(client, oldItem, updatedItem); err != nil {
+			http.Error(w, "Failed to update meal", http.StatusInternalServerError)
+			return
+		}
+
+		tmpl := template.Must(template.ParseFiles("templates/index.html"))
+		tmpl.ExecuteTemplate(w, "shopping-list-item", updatedItem)
 	})
 
 	// start server
