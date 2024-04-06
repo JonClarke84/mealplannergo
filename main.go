@@ -147,7 +147,7 @@ func main() {
 
 		newestList, err := getShoppingList(client)
 		if err != nil {
-			fmt.Printf("Error getting this week's meals: %s\n", err)
+			fmt.Printf("Error getting this week's shopping list: %s\n", err)
 			return
 		}
 

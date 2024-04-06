@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -56,8 +57,21 @@ func updateMeal(client *mongo.Client, day string, meal string) error {
 func addShoppingListItem(client *mongo.Client, item string) error {
 	collection := client.Database("GoShopping").Collection("shopping-lists")
 	filter := bson.D{{}}
+	// first check if the item is already in the list
+	shoppingList, err := getShoppingList(client)
+	if err != nil {
+		fmt.Printf("Error getting shopping list: %s\n", err)
+		return err
+	}
+	for _, listItem := range shoppingList.ShoppingList {
+		if listItem == item {
+			fmt.Printf("Item already in shopping list: %s\n", item)
+			return errors.New(fmt.Errorf("item already in shopping list: %s", item).Error())
+		}
+	}
+	// if not, add it
 	update := bson.D{{Key: "$push", Value: bson.D{{Key: "ShoppingList", Value: item}}}}
-	_, err := collection.UpdateOne(context.Background(), filter, update)
+	_, err = collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
 		fmt.Printf("Error adding shopping list item: %s\n", err)
 		return err
