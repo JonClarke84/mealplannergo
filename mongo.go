@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -29,18 +29,22 @@ func db(uri string) (*mongo.Client, error) {
 	return client, nil
 }
 
-func getShoppingList(client *mongo.Client) (ShoppingList, error) {
+func getShoppingList(client *mongo.Client) ([]ShoppingListItem, error) {
 	// find the first document in the collection
-	collection := client.Database("GoShopping").Collection("shopping-lists")
-	// find first doc, it will be a struct with a ShoppingList key. pull that out into []string
-	filter := bson.D{{}}
-	var shoppingList ShoppingList
-	err := collection.FindOne(context.Background(), filter).Decode(&shoppingList)
+	collection := client.Database("GoShopping").Collection("shopping-list-items")
+	// get all documents as an array
+	cursor, err := collection.Find(context.Background(), bson.D{{}})
 	if err != nil {
-		fmt.Printf("Error finding shopping list: %s\n", err)
-		return shoppingList, err
+		panic(err)
 	}
-	return shoppingList, nil
+	var results []ShoppingListItem
+	// iterate through the cursor and decode each document
+	if err = cursor.All(context.Background(), &results); err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Found multiple documents (array of pointers): %+v\n", results)
+	return results, nil
 }
 
 func updateMeal(client *mongo.Client, day string, meal string) error {
@@ -55,23 +59,9 @@ func updateMeal(client *mongo.Client, day string, meal string) error {
 }
 
 func addShoppingListItem(client *mongo.Client, item string) error {
-	collection := client.Database("GoShopping").Collection("shopping-lists")
-	filter := bson.D{{}}
-	// first check if the item is already in the list
-	shoppingList, err := getShoppingList(client)
-	if err != nil {
-		fmt.Printf("Error getting shopping list: %s\n", err)
-		return err
-	}
-	for _, listItem := range shoppingList.ShoppingList {
-		if listItem == item {
-			fmt.Printf("Item already in shopping list: %s\n", item)
-			return errors.New(fmt.Errorf("item already in shopping list: %s", item).Error())
-		}
-	}
-	// if not, add it
-	update := bson.D{{Key: "$push", Value: bson.D{{Key: "ShoppingList", Value: item}}}}
-	_, err = collection.UpdateOne(context.Background(), filter, update)
+	collection := client.Database("GoShopping").Collection("shopping-list-items")
+	// create a new document in mongo db with the item
+	_, err := collection.InsertOne(context.Background(), bson.D{{Key: "item", Value: item}})
 	if err != nil {
 		fmt.Printf("Error adding shopping list item: %s\n", err)
 		return err
@@ -92,10 +82,14 @@ func updateShoppingListItem(client *mongo.Client, oldItem string, newItem string
 }
 
 func deleteShoppingListItem(client *mongo.Client, item string) error {
-	collection := client.Database("GoShopping").Collection("shopping-lists")
-	filter := bson.D{{Key: "ShoppingList", Value: item}}
-	update := bson.D{{Key: "$pull", Value: bson.D{{Key: "ShoppingList", Value: item}}}}
-	_, err := collection.UpdateOne(context.Background(), filter, update)
+	objectIdFromHex, err := primitive.ObjectIDFromHex(item)
+	if err != nil {
+		fmt.Printf("Error converting item to object ID: %s\n", err)
+		return err
+	}
+	collection := client.Database("GoShopping").Collection("shopping-list-items")
+	filter := bson.D{{Key: "_id", Value: objectIdFromHex}}
+	_, err = collection.DeleteOne(context.Background(), filter)
 	if err != nil {
 		fmt.Printf("Error deleting shopping list item: %s\n", err)
 		return err

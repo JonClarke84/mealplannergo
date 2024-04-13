@@ -6,16 +6,11 @@ import (
 	"html/template"
 	"net/http"
 	"os"
-	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// types
-type ShoppingList struct {
-	ID           primitive.ObjectID `bson:"_id,omitempty"`
-	Date         *time.Time         `bson:"date,omitempty"`
-	ShoppingList []string           `bson:"ShoppingList"`
+type ShoppingListItem struct {
+	ID   string `bson:"_id" json:"id,omitempty"`
+	Item string `bson:"Item" json:"Item"`
 }
 
 type Meal struct {
@@ -28,7 +23,7 @@ type MealPlan struct {
 }
 type PageData struct {
 	MealPlan     []Meal
-	ShoppingList []string
+	ShoppingList []ShoppingListItem
 }
 
 func main() {
@@ -43,6 +38,7 @@ func main() {
 
 	// routes
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+    // Your existing handler code
 		shoppingList, err := getShoppingList(client)
 		if err != nil {
 			fmt.Printf("Error getting this week's meals: %s\n", err)
@@ -63,9 +59,9 @@ func main() {
 
 		pageData := PageData{
 			MealPlan:     mealPlan.Meals,
-			ShoppingList: shoppingList.ShoppingList,
+			ShoppingList: shoppingList,
 		}
-
+		fmt.Printf("Page data: %+v\n", pageData)
 		tmpl.Execute(w, pageData)
 	})
 
