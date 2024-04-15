@@ -44,12 +44,12 @@
         </ul>
          <h2 class="text-2xl font-bold m-4">Shopping List</h2>
         <div>
-            <form
+        <form
                 id="shopping-list-form"
                 hx-post="/shopping-list"
                 hx-target="#shopping-list"
                 hx-swap="beforeend"
-            >
+        >
                 <div
                     style="display: flex;
                     align-items: center;
@@ -80,34 +80,32 @@
             hx-post="/shopping-list/sort"
             hx-include="this"
             hx-trigger="end"
-            hx-target="#shopping-list"
         >
             {{ range .ShoppingList }}
             {{ block "shopping-list-item" . }}
             <li
-                id="shopping-list-{{.ID}}"
+                id="shopping-list-{{.Id}}"
             >
-                <div class="mt-2 w-full" id="shopping-list-item-{{.ID}}">
+                <div class="mt-2 w-full" id="shopping-list-item-{{.Id}}">
                     <label
-                        for="item-{{.ID}}"
+                        for="item-{{.Id}}"
                         class="flex items-center cursor-pointer items-start rounded-lg border border-gray-200 p-2 bg-white transition hover:bg-gray-50"
                     >
                         <div class="flex items-center pl-4 pr-4">
                             &#8203;
-                            <input type="checkbox" class="size-6 rounded border-gray-300" id="{{.}}" />
+                        <input type="checkbox" class="size-6 rounded border-gray-300" value={{.Ticked}} />
                         </div>
                         <form
                             class="w-full"
                         >
                             <input
-                                name="{{.ID}}"
+                                name="{{.ParentId}}"
                                 type="text"
-                                id="{{.ID}}"
                                 value="{{.Item}}"
                                 class="handle mt-1 w-full rounded-md border-gray-200 shadow-sm sm:text-sm"
                                 hx-post="/shopping-list/edit"
                                 hx-trigger="keyup changed delay:1s"
-                                hx-target="#shopping-list-item-{{.ID}}"
+                                hx-target="#shopping-list-{{.ParentId}}"
                                 hx-include="this"
                             />
                         </form>
@@ -115,8 +113,8 @@
                             <button
                                 type="button"
                                 class="flex justify-center hover:text-gray-700 w-10"
-                                hx-delete="/shopping-list?item={{.ID}}"
-                                hx-target="#shopping-list-{{.ID}}"
+                                hx-delete="/shopping-list?item={{.Id}}"
+                                hx-target="#shopping-list-{{.Id}}"
                             >
                                 <span class="sr-only">Delete</span>
                                 <svg

@@ -9,8 +9,9 @@ import (
 )
 
 type ShoppingListItem struct {
-	ID   string `bson:"_id" json:"id,omitempty"`
-	Item string `bson:"Item" json:"Item"`
+  Item string `bson:"Item" json:"Item"`
+  Ticked bool
+  Id string `bson:"Id" json:"Id,omitempty"`
 }
 
 type Meal struct {
@@ -38,7 +39,6 @@ func main() {
 
 	// routes
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-    // Your existing handler code
 		shoppingList, err := getShoppingList(client)
 		if err != nil {
 			fmt.Printf("Error getting this week's meals: %s\n", err)
@@ -61,9 +61,11 @@ func main() {
 			MealPlan:     mealPlan.Meals,
 			ShoppingList: shoppingList,
 		}
-		fmt.Printf("Page data: %+v\n", pageData)
-		tmpl.Execute(w, pageData)
-	})
+
+  //   fmt.Printf("pageData = %+v\n", pageData)
+    tmpl.Execute(w, pageData)
+  })
+	
 
 	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public/"))))
 
@@ -104,6 +106,7 @@ func main() {
 		// CREATE
 		if r.Method == "POST" {
 			item := r.PostFormValue("item")
+      fmt.Printf("item = %s\n", item)
 			if err := addShoppingListItem(client, item); err != nil {
 				http.Error(w, "Failed to create item", http.StatusInternalServerError)
 				return
