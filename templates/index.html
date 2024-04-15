@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <title>Meal Planner with HTMX</title>
     <link rel="stylesheet" href="public/css/index.css">
+    <script src="http://localhost:8080/public/htmx.min.js"></script>
+    <script> if (htmx) { console.log('we have htmx') } else { console.log('no htmx') } </script>
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script>
         tailwind.config = {}
@@ -99,13 +101,13 @@
                             class="w-full"
                         >
                             <input
-                                name="{{.ParentId}}"
+                                name="{{.Id}}"
                                 type="text"
                                 value="{{.Item}}"
                                 class="handle mt-1 w-full rounded-md border-gray-200 shadow-sm sm:text-sm"
                                 hx-post="/shopping-list/edit"
                                 hx-trigger="keyup changed delay:1s"
-                                hx-target="#shopping-list-{{.ParentId}}"
+                                hx-target="#shopping-list-{{.Id}}"
                                 hx-include="this"
                             />
                         </form>
@@ -141,36 +143,35 @@
             {{ end }}
         </ul>
     </div>
-    <script src="public/htmx.min.js"></script>
     <!-- jsDelivr :: Sortable :: Latest (https://www.jsdelivr.com/package/npm/sortablejs) -->
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <script>
-        function initializeSortable() {
-            var sortables = document.querySelectorAll(".sortable");
-            sortables.forEach(function(sortable) {
-                new Sortable(sortable, {
-                    animation: 150,
-                    ghostClass: 'drag-ghost-class',
-                    dragClass: 'li-drag-class',
-                    filter: ".htmx-indicator",
-                    forceFallback: true,
-                    handle: '.handle',
-                    onMove: function(evt) {
-                        return evt.related.className.indexOf('htmx-indicator') === -1;
-                    }
-                });
-            });
-        }
-
-        // Run on initial page load
-        initializeSortable();
-
-        // Re-run whenever HTMX swaps in new content
-        document.body.addEventListener('htmx:afterSwap', function(event) {
-            if (event.detail.target.ID === 'shopping-list') {
-                initializeSortable();
-            }
-        });
-    </script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script> -->
+    <!-- <script> -->
+    <!--     function initializeSortable() { -->
+    <!--         var sortables = document.querySelectorAll(".sortable"); -->
+    <!--         sortables.forEach(function(sortable) { -->
+    <!--             new Sortable(sortable, { -->
+    <!--                 animation: 150, -->
+    <!--                 ghostClass: 'drag-ghost-class', -->
+    <!--                 dragClass: 'li-drag-class', -->
+    <!--                 filter: ".htmx-indicator", -->
+    <!--                 forceFallback: true, -->
+    <!--                 handle: '.handle', -->
+    <!--                 onMove: function(evt) { -->
+    <!--                     return evt.related.className.indexOf('htmx-indicator') === -1; -->
+    <!--                 } -->
+    <!--             }); -->
+    <!--         }); -->
+    <!--     } -->
+    <!---->
+    <!--     // Run on initial page load -->
+    <!--     initializeSortable(); -->
+    <!---->
+    <!--     // Re-run whenever HTMX swaps in new content -->
+    <!--     document.body.addEventListener('htmx:afterSwap', function(event) { -->
+    <!--         if (event.detail.target.ID === 'shopping-list') { -->
+    <!--             initializeSortable(); -->
+    <!--         } -->
+    <!--     }); -->
+    <!-- </script> -->
 </body>
 </html>

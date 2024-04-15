@@ -34,31 +34,43 @@ func db(uri string) (*mongo.Client, error) {
 	return client, nil
 }
 
-func getShoppingList(client *mongo.Client) ([]ShoppingListItem, error) {
-  fmt.Println("getShoppingList")
-	// find the first document in the collection
-	collection := client.Database("GoShopping").Collection("shopping-lists")
-
-  // get the first document
+func getShoppingListParentId(client *mongo.Client) (primitive.ObjectID, error) {
+  collection := client.Database("GoShopping").Collection("shopping-lists")
   filter := bson.D{{}}
-
   var shoppingList ShoppingListDocument
   err := collection.FindOne(context.Background(), filter).Decode(&shoppingList)
   if err != nil {
     fmt.Printf("Error finding shopping list: %s\n", err)
+    return primitive.NilObjectID, err
   }
-  // for eacn item in shoppingList.ShoppingList, get the item from the shopping-list-items collection
+  return shoppingList.ID, nil
+}
+
+func getShoppingList(client *mongo.Client, parentID primitive.ObjectID) (primitive.ObjectID, error) {
+	// find the first document in the collection
+	collection := client.Database("GoShopping").Collection("shopping-lists")
+  
+  filter := bson.D{{Key: "_id", Value: parentID}}
+  var shoppingList ShoppingListDocument
+  collection.FindOne(context.Background(), filter).Decode(&shoppingList)
+  return shoppingList.ID, nil
+ }
+
+func getShoppingListItems(client *mongo.Client, parentID primitive.ObjectID) ([]ShoppingListItem, error) {
+  collection := client.Database("GoShopping").Collection("shopping-list-items")
+  filter := bson.D{{Key: "ParentId", Value: parentID}}
+  cursor, err := collection.Find(context.Background(), filter)
+  if err != nil {
+    fmt.Printf("Error finding shopping list items: %s\n", err)
+    return nil, err
+  }
   var shoppingListItems []ShoppingListItem
-  shoppingListItemsCollection := client.Database("GoShopping").Collection("shopping-list-items")
-  for _, item := range shoppingList.ShoppingList {
-    var shoppingListItem ShoppingListItem
-    err := shoppingListItemsCollection.FindOne(context.Background(), bson.D{{Key: "_id", Value: item}}).Decode(&shoppingListItem)
-    shoppingListItem.Id = item.Hex()
-    if err != nil {
-      fmt.Printf("Error finding shopping list item: %s\n", err)
-      return shoppingListItems, err
-    }
-    shoppingListItems = append(shoppingListItems, shoppingListItem)
+  if err = cursor.All(context.Background(), &shoppingListItems); err != nil {
+    fmt.Printf("Error iterating through shopping list items: %s\n", err)
+    return nil, err
+  }
+  for i, item := range shoppingListItems {
+    shoppingListItems[i].Id = item.ID.Hex()
   }
   return shoppingListItems, nil
 }
@@ -76,6 +88,21 @@ func updateMeal(client *mongo.Client, day string, meal string) error {
 
 func addShoppingListItem(client *mongo.Client, itemName string) error {
   fmt.Println("adding item: ", itemName)
+  var parentList ShoppingListDocument
+  shoppingListCollection := client.Database("GoShopping").Collection("shopping-lists")
+  filter := bson.D{{}}
+  err := shoppingListCollection.FindOne(context.Background(), filter).Decode(&parentList)
+  if err != nil {
+    fmt.Printf("Error finding shopping list: %s\n", err)
+    return err
+  }
+  fmt.Println("parent id: ", parentList.ID)
+  collection := client.Database("GoShopping").Collection("shopping-list-items")
+  _, collectionErr := collection.InsertOne(context.Background(), bson.D{{Key: "Item", Value: itemName}, {Key: "ParentId", Value: parentList.ID}})
+  if collectionErr != nil {
+    fmt.Printf("Error adding shopping list item: %s\n", collectionErr)
+    return err
+  }
   return nil
 }
 
