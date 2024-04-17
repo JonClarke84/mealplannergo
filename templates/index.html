@@ -5,7 +5,6 @@
     <title>Meal Planner with HTMX</title>
     <link rel="stylesheet" href="public/css/index.css">
     <script src="http://localhost:8080/public/htmx.min.js"></script>
-    <script> if (htmx) { console.log('we have htmx') } else { console.log('no htmx') } </script>
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script>
         tailwind.config = {}
@@ -78,36 +77,32 @@
         {{ block "shopping-list" . }}
         <ul
             id="shopping-list"
-            class="sortable"
-            hx-post="/shopping-list/sort"
-            hx-include="this"
-            hx-trigger="end"
         >
             {{ range .ShoppingList }}
             {{ block "shopping-list-item" . }}
             <li
-                id="shopping-list-{{.Id}}"
+                id="shopping-list-{{.IDHex}}"
             >
-                <div class="mt-2 w-full" id="shopping-list-item-{{.Id}}">
+                <div class="mt-2 w-full" id="shopping-list-item-{{.IDHex}}">
                     <label
-                        for="item-{{.Id}}"
+                        for="item-{{.IDHex}}"
                         class="flex items-center cursor-pointer items-start rounded-lg border border-gray-200 p-2 bg-white transition hover:bg-gray-50"
                     >
                         <div class="flex items-center pl-4 pr-4">
                             &#8203;
-                        <input type="checkbox" class="size-6 rounded border-gray-300" value={{.Ticked}} />
+                        <input type="checkbox" class="size-6 rounded border-gray-300" />
                         </div>
                         <form
                             class="w-full"
                         >
                             <input
-                                name="{{.Id}}"
+                                name="{{.IDHex}}"
                                 type="text"
                                 value="{{.Item}}"
                                 class="handle mt-1 w-full rounded-md border-gray-200 shadow-sm sm:text-sm"
                                 hx-post="/shopping-list/edit"
                                 hx-trigger="keyup changed delay:1s"
-                                hx-target="#shopping-list-{{.Id}}"
+                                hx-target="#shopping-list-{{.IDHex}}"
                                 hx-include="this"
                             />
                         </form>
@@ -115,8 +110,8 @@
                             <button
                                 type="button"
                                 class="flex justify-center hover:text-gray-700 w-10"
-                                hx-delete="/shopping-list?item={{.Id}}"
-                                hx-target="#shopping-list-{{.Id}}"
+                                hx-delete="/shopping-list?item={{.IDHex}}"
+                                hx-target="#shopping-list-{{.IDHex}}"
                             >
                                 <span class="sr-only">Delete</span>
                                 <svg

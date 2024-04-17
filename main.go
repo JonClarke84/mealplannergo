@@ -11,10 +11,15 @@ import (
 )
 
 type ShoppingListItem struct {
-  Item string `bson:"Item" json:"Item"`
+  ID     primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+  IDHex  string             `json:"idHex,omitempty"`
+  Item   string              
   Ticked bool
-  Id string `bson:"Id" json:"Id,omitempty"`
-  ID primitive.ObjectID `bson:"_id" json:"id,omitempty"`
+}
+
+type ShoppingList struct {
+  ShoppingList []ShoppingListItem
+  ID primitive.ObjectID
 }
 
 type Meal struct {
@@ -42,23 +47,11 @@ func main() {
 
 	// routes
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-    shoppingListParentId, err := getShoppingListParentId(client)
-    if err != nil {
-      fmt.Printf("Error getting shopping list parent id: %s\n", err)
-      return
-    }
-
-		shoppingList, err := getShoppingList(client, shoppingListParentId)
+		shoppingList, err := getShoppingList(client)
 		if err != nil {
 			fmt.Printf("Error getting this week's meals: %s\n", err)
 			return
 		}
-
-    shoppingListItems, err := getShoppingListItems(client, shoppingList)
-    if err != nil {
-      fmt.Printf("Error getting shopping list items: %s\n", err)
-      return
-    }
 
 		mealPlan, err := getMealPlan(client)
 		if err != nil {
@@ -74,7 +67,7 @@ func main() {
 
 		pageData := PageData{
 			MealPlan:     mealPlan.Meals,
-			ShoppingList: shoppingListItems,
+			ShoppingList: shoppingList,
 		}
 
     fmt.Printf("pageData = %+v\n", pageData)
