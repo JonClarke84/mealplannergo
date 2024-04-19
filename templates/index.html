@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Meal Planner with HTMX</title>
     <link rel="stylesheet" href="public/css/index.css">
+    <script src="http://localhost:8080/public/htmx.min.js"></script>
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script>
         tailwind.config = {}
@@ -44,12 +45,12 @@
         </ul>
          <h2 class="text-2xl font-bold m-4">Shopping List</h2>
         <div>
-            <form
+        <form
                 id="shopping-list-form"
                 hx-post="/shopping-list"
                 hx-target="#shopping-list"
                 hx-swap="beforeend"
-            >
+        >
                 <div
                     style="display: flex;
                     align-items: center;
@@ -76,38 +77,32 @@
         {{ block "shopping-list" . }}
         <ul
             id="shopping-list"
-            class="sortable"
-            hx-post="/shopping-list/sort"
-            hx-include="this"
-            hx-trigger="end"
-            hx-target="#shopping-list"
         >
             {{ range .ShoppingList }}
             {{ block "shopping-list-item" . }}
             <li
-                id="shopping-list-{{.}}"
+                id="shopping-list-{{.IDHex}}"
             >
-                <div class="mt-2 w-full" id="shopping-list-item-{{.}}">
+                <div class="mt-2 w-full" id="shopping-list-item-{{.IDHex}}">
                     <label
-                        for="item-{{.}}"
+                        for="item-{{.IDHex}}"
                         class="flex items-center cursor-pointer items-start rounded-lg border border-gray-200 p-2 bg-white transition hover:bg-gray-50"
                     >
                         <div class="flex items-center pl-4 pr-4">
                             &#8203;
-                            <input type="checkbox" class="size-6 rounded border-gray-300" id="{{.}}" />
+                        <input type="checkbox" class="size-6 rounded border-gray-300" />
                         </div>
                         <form
                             class="w-full"
                         >
                             <input
-                                name="{{.}}"
+                                name="{{.IDHex}}"
                                 type="text"
-                                id="{{.}}"
-                                value="{{.}}"
+                                value="{{.Item}}"
                                 class="handle mt-1 w-full rounded-md border-gray-200 shadow-sm sm:text-sm"
                                 hx-post="/shopping-list/edit"
                                 hx-trigger="keyup changed delay:1s"
-                                hx-target="#shopping-list-item-{{.}}"
+                                hx-target="#shopping-list-{{.IDHex}}"
                                 hx-include="this"
                             />
                         </form>
@@ -115,8 +110,8 @@
                             <button
                                 type="button"
                                 class="flex justify-center hover:text-gray-700 w-10"
-                                hx-delete="/shopping-list?item={{.}}"
-                                hx-target="#shopping-list-{{.}}"
+                                hx-delete="/shopping-list?item={{.IDHex}}"
+                                hx-target="#shopping-list-{{.IDHex}}"
                             >
                                 <span class="sr-only">Delete</span>
                                 <svg
@@ -143,36 +138,35 @@
             {{ end }}
         </ul>
     </div>
-    <script src="public/htmx.min.js"></script>
     <!-- jsDelivr :: Sortable :: Latest (https://www.jsdelivr.com/package/npm/sortablejs) -->
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <script>
-        function initializeSortable() {
-            var sortables = document.querySelectorAll(".sortable");
-            sortables.forEach(function(sortable) {
-                new Sortable(sortable, {
-                    animation: 150,
-                    ghostClass: 'drag-ghost-class',
-                    dragClass: 'li-drag-class',
-                    filter: ".htmx-indicator",
-                    forceFallback: true,
-                    handle: '.handle',
-                    onMove: function(evt) {
-                        return evt.related.className.indexOf('htmx-indicator') === -1;
-                    }
-                });
-            });
-        }
-
-        // Run on initial page load
-        initializeSortable();
-
-        // Re-run whenever HTMX swaps in new content
-        document.body.addEventListener('htmx:afterSwap', function(event) {
-            if (event.detail.target.id === 'shopping-list') {
-                initializeSortable();
-            }
-        });
-    </script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script> -->
+    <!-- <script> -->
+    <!--     function initializeSortable() { -->
+    <!--         var sortables = document.querySelectorAll(".sortable"); -->
+    <!--         sortables.forEach(function(sortable) { -->
+    <!--             new Sortable(sortable, { -->
+    <!--                 animation: 150, -->
+    <!--                 ghostClass: 'drag-ghost-class', -->
+    <!--                 dragClass: 'li-drag-class', -->
+    <!--                 filter: ".htmx-indicator", -->
+    <!--                 forceFallback: true, -->
+    <!--                 handle: '.handle', -->
+    <!--                 onMove: function(evt) { -->
+    <!--                     return evt.related.className.indexOf('htmx-indicator') === -1; -->
+    <!--                 } -->
+    <!--             }); -->
+    <!--         }); -->
+    <!--     } -->
+    <!---->
+    <!--     // Run on initial page load -->
+    <!--     initializeSortable(); -->
+    <!---->
+    <!--     // Re-run whenever HTMX swaps in new content -->
+    <!--     document.body.addEventListener('htmx:afterSwap', function(event) { -->
+    <!--         if (event.detail.target.ID === 'shopping-list') { -->
+    <!--             initializeSortable(); -->
+    <!--         } -->
+    <!--     }); -->
+    <!-- </script> -->
 </body>
 </html>

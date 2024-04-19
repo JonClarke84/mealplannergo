@@ -3,11 +3,18 @@ package main
 import (
 	"context"
 	"fmt"
+  "time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+type ShoppingListDocument struct {
+  ID primitive.ObjectID `bson:"_id" json:"id,omitempty"`
+  ShoppingList []ShoppingListItem `bson:"ShoppingList" json:"ShoppingList"`
+}
 
 func db(uri string) (*mongo.Client, error) {
 	// connect to MongoDB
@@ -28,18 +35,34 @@ func db(uri string) (*mongo.Client, error) {
 	return client, nil
 }
 
-func getShoppingList(client *mongo.Client) (ShoppingList, error) {
-	// find the first document in the collection
-	collection := client.Database("GoShopping").Collection("shopping-lists")
-	// find first doc, it will be a struct with a ShoppingList key. pull that out into []string
-	filter := bson.D{{}}
-	var shoppingList ShoppingList
-	err := collection.FindOne(context.Background(), filter).Decode(&shoppingList)
-	if err != nil {
-		fmt.Printf("Error finding shopping list: %s\n", err)
-		return shoppingList, err
-	}
-	return shoppingList, nil
+func getShoppingList(client *mongo.Client) ([]ShoppingListItem, error) {
+  collection := client.Database("GoShopping").Collection("shopping-lists")
+
+  var document struct {
+    ID           primitive.ObjectID `bson:"_id"`
+    ShoppingList []struct {
+      ID     primitive.ObjectID `bson:"Id"`
+      Item   string             `bson:"Item"`
+      Ticked bool               `bson:"Ticked"`
+    } `bson:"ShoppingList"`
+  }
+
+  err := collection.FindOne(context.Background(), bson.D{}).Decode(&document)
+  if err != nil {
+    return nil, err
+  }
+
+  shoppingList := make([]ShoppingListItem, len(document.ShoppingList))
+  for i, item := range document.ShoppingList {
+    shoppingList[i] = ShoppingListItem{
+      ID:     item.ID,
+      IDHex:  item.ID.Hex(),
+      Item:   item.Item,
+      Ticked: item.Ticked,
+    }
+  }
+
+  return shoppingList, nil
 }
 
 func updateMeal(client *mongo.Client, day string, meal string) error {
@@ -53,16 +76,20 @@ func updateMeal(client *mongo.Client, day string, meal string) error {
 	return nil
 }
 
-func addShoppingListItem(client *mongo.Client, item string) error {
-	collection := client.Database("GoShopping").Collection("shopping-lists")
-	filter := bson.D{{}}
-	update := bson.D{{Key: "$push", Value: bson.D{{Key: "ShoppingList", Value: item}}}}
-	_, err := collection.UpdateOne(context.Background(), filter, update)
-	if err != nil {
-		fmt.Printf("Error adding shopping list item: %s\n", err)
-		return err
-	}
-	return nil
+func addShoppingListItem(client *mongo.Client, itemName string) error {
+  fmt.Println("adding item: ", itemName)
+  newIdFromTimeStamp := primitive.NewObjectIDFromTimestamp(time.Now())
+  fmt.Println("new id: ", newIdFromTimeStamp)
+  collection := client.Database("GoShopping").Collection("shopping-lists") 
+  filter := bson.D{{}}
+  // push { id: newIdFromTimeStamp, Item: itemName, Ticked: false } to the ShoppingList array
+  update := bson.D{{Key: "$push", Value: bson.D{{Key: "ShoppingList", Value: bson.D{{Key: "Id", Value: newIdFromTimeStamp}, {Key: "Item", Value: itemName}, {Key: "Ticked", Value: false}}}}}}
+  _, err := collection.UpdateOne(context.Background(), filter, update)
+  if err != nil {
+    fmt.Printf("Error adding shopping list item: %s\n", err)
+    return err
+  }
+  return nil
 }
 
 func updateShoppingListItem(client *mongo.Client, oldItem string, newItem string) error {
@@ -78,10 +105,14 @@ func updateShoppingListItem(client *mongo.Client, oldItem string, newItem string
 }
 
 func deleteShoppingListItem(client *mongo.Client, item string) error {
-	collection := client.Database("GoShopping").Collection("shopping-lists")
-	filter := bson.D{{Key: "ShoppingList", Value: item}}
-	update := bson.D{{Key: "$pull", Value: bson.D{{Key: "ShoppingList", Value: item}}}}
-	_, err := collection.UpdateOne(context.Background(), filter, update)
+	objectIdFromHex, err := primitive.ObjectIDFromHex(item)
+	if err != nil {
+		fmt.Printf("Error converting item to object ID: %s\n", err)
+		return err
+	}
+	collection := client.Database("GoShopping").Collection("shopping-list-items")
+	filter := bson.D{{Key: "_id", Value: objectIdFromHex}}
+	_, err = collection.DeleteOne(context.Background(), filter)
 	if err != nil {
 		fmt.Printf("Error deleting shopping list item: %s\n", err)
 		return err

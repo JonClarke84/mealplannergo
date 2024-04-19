@@ -6,16 +6,20 @@ import (
 	"html/template"
 	"net/http"
 	"os"
-	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+  "go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// types
+type ShoppingListItem struct {
+  ID     primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+  IDHex  string             `json:"idHex,omitempty"`
+  Item   string              
+  Ticked bool
+}
+
 type ShoppingList struct {
-	ID           primitive.ObjectID `bson:"_id,omitempty"`
-	Date         *time.Time         `bson:"date,omitempty"`
-	ShoppingList []string           `bson:"ShoppingList"`
+  ShoppingList []ShoppingListItem
+  ID primitive.ObjectID
 }
 
 type Meal struct {
@@ -28,7 +32,7 @@ type MealPlan struct {
 }
 type PageData struct {
 	MealPlan     []Meal
-	ShoppingList []string
+	ShoppingList []ShoppingListItem
 }
 
 func main() {
@@ -63,11 +67,13 @@ func main() {
 
 		pageData := PageData{
 			MealPlan:     mealPlan.Meals,
-			ShoppingList: shoppingList.ShoppingList,
+			ShoppingList: shoppingList,
 		}
 
-		tmpl.Execute(w, pageData)
-	})
+    fmt.Printf("pageData = %+v\n", pageData)
+    tmpl.Execute(w, pageData)
+  })
+	
 
 	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public/"))))
 
@@ -104,10 +110,11 @@ func main() {
 			fmt.Printf("Error parsing shopping list: %s\n", err)
 			return
 		}
-
+    fmt.Printf("r.Method = %s\n", r.Method)
 		// CREATE
 		if r.Method == "POST" {
 			item := r.PostFormValue("item")
+      fmt.Printf("item = %s\n", item)
 			if err := addShoppingListItem(client, item); err != nil {
 				http.Error(w, "Failed to create item", http.StatusInternalServerError)
 				return
@@ -128,36 +135,48 @@ func main() {
 		}
 	})
 
-	http.HandleFunc("/shopping-list/sort", func(w http.ResponseWriter, r *http.Request) {
-		if err := r.ParseForm(); err != nil {
-			fmt.Printf("Error parsing shopping list: %s\n", err)
-			return
-		}
-
-		var items []string
-
-		for _, v := range r.PostForm {
-			items = append(items, v...)
-		}
-
-		if err := sortShoppingList(client, items); err != nil {
-			http.Error(w, "Failed to sort shopping list", http.StatusInternalServerError)
-			return
-		}
-
-		newestList, err := getShoppingList(client)
-		if err != nil {
-			fmt.Printf("Error getting this week's meals: %s\n", err)
-			return
-		}
-
-		tmpl, err := template.ParseFiles("templates/index.html")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		tmpl.ExecuteTemplate(w, "shopping-list", newestList)
-	})
+	// http.HandleFunc("/shopping-list/sort", func(w http.ResponseWriter, r *http.Request) {
+	// 	if err := r.ParseForm(); err != nil {
+	// 		fmt.Printf("Error parsing shopping list: %s\n", err)
+	// 		return
+	// 	}
+	//
+	// 	var items []string
+	//
+	// 	for _, v := range r.PostForm {
+	// 		items = append(items, v...)
+	// 	}
+	//
+	// 	if err := sortShoppingList(client, items); err != nil {
+	// 		http.Error(w, "Failed to sort shopping list", http.StatusInternalServerError)
+	// 		return
+	// 	}
+	//
+ //    shoppingListParentId, err := getShoppingListParentId(client)
+ //    if err != nil {
+ //      fmt.Printf("Error getting shopping list parent id: %s\n", err)
+ //      return
+ //    }
+	//
+ //    shoppingList, err := getShoppingList(client, shoppingListParentId)
+ //    if err != nil {
+ //      fmt.Printf("Error getting shoppingList: %s\n", err)
+ //      return
+ //    }
+	//
+	// 	newestList, err := getShoppingListItems(client, shoppingList)
+	// 	if err != nil {
+	// 		fmt.Printf("Error getting this week's shopping list: %s\n", err)
+	// 		return
+	// 	}
+	//
+	// 	tmpl, err := template.ParseFiles("templates/index.html")
+	// 	if err != nil {
+	// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 		return
+	// 	}
+	// 	tmpl.ExecuteTemplate(w, "shopping-list", newestList)
+	// })
 
 	http.HandleFunc("/shopping-list/edit", func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
