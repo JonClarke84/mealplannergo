@@ -76,20 +76,24 @@ func updateMeal(client *mongo.Client, day string, meal string) error {
 	return nil
 }
 
-func addShoppingListItem(client *mongo.Client, itemName string) error {
-  fmt.Println("adding item: ", itemName)
+func addShoppingListItem(client *mongo.Client, itemName string) (ShoppingListItem, error) {
   newIdFromTimeStamp := primitive.NewObjectIDFromTimestamp(time.Now())
-  fmt.Println("new id: ", newIdFromTimeStamp)
   collection := client.Database("GoShopping").Collection("shopping-lists") 
   filter := bson.D{{}}
-  // push { id: newIdFromTimeStamp, Item: itemName, Ticked: false } to the ShoppingList array
   update := bson.D{{Key: "$push", Value: bson.D{{Key: "ShoppingList", Value: bson.D{{Key: "Id", Value: newIdFromTimeStamp}, {Key: "Item", Value: itemName}, {Key: "Ticked", Value: false}}}}}}
   _, err := collection.UpdateOne(context.Background(), filter, update)
   if err != nil {
     fmt.Printf("Error adding shopping list item: %s\n", err)
-    return err
+    var failedItem ShoppingListItem
+    return failedItem, err
   }
-  return nil
+  newItem := ShoppingListItem {
+    ID: newIdFromTimeStamp,
+    IDHex: newIdFromTimeStamp.Hex(),
+    Item: itemName,
+    Ticked: false,
+  }
+  return newItem, nil
 }
 
 func updateShoppingListItem(client *mongo.Client, oldItem string, newItem string) error {
