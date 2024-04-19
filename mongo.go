@@ -114,14 +114,17 @@ func deleteShoppingListItem(client *mongo.Client, item string) error {
 		fmt.Printf("Error converting item to object ID: %s\n", err)
 		return err
 	}
-	collection := client.Database("GoShopping").Collection("shopping-list-items")
-	filter := bson.D{{Key: "_id", Value: objectIdFromHex}}
-	_, err = collection.DeleteOne(context.Background(), filter)
-	if err != nil {
-		fmt.Printf("Error deleting shopping list item: %s\n", err)
-		return err
-	}
-	return nil
+	collection := client.Database("GoShopping").Collection("shopping-lists")
+  // find first document in Collection
+  filter := bson.D{{}}
+  // delete item from ShoppingList array
+  update := bson.D{{Key: "$pull", Value: bson.D{{Key: "ShoppingList", Value: bson.D{{Key: "Id", Value: objectIdFromHex}}}}}}
+  _, err = collection.UpdateOne(context.Background(), filter, update)
+  if err != nil {
+    fmt.Printf("Error deleting shopping list item: %s\n", err)
+    return err
+  }
+  return nil
 }
 
 func sortShoppingList(client *mongo.Client, newItemOrder []string) error {
