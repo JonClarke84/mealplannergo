@@ -110,17 +110,16 @@ func main() {
 			fmt.Printf("Error parsing shopping list: %s\n", err)
 			return
 		}
-    fmt.Printf("r.Method = %s\n", r.Method)
 		// CREATE
 		if r.Method == "POST" {
 			item := r.PostFormValue("item")
-      fmt.Printf("item = %s\n", item)
-			if err := addShoppingListItem(client, item); err != nil {
-				http.Error(w, "Failed to create item", http.StatusInternalServerError)
-				return
-			}
+			newItem, err := addShoppingListItem(client, item)
+      if err != nil {
+        fmt.Printf("Error adding shopping list item: %s\n", err)
+        return
+      }
 			tmpl := template.Must(template.ParseFiles("templates/index.html"))
-			tmpl.ExecuteTemplate(w, "shopping-list-item", item)
+			tmpl.ExecuteTemplate(w, "shopping-list-item", newItem)
 		}
 
 		// DELETE
