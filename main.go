@@ -183,7 +183,7 @@ func main() {
 			return
 		}
 
-		var oldItem string
+		var itemId string
 		var updatedItem string
 		for k, v := range r.PostForm {
 			itemId = k
