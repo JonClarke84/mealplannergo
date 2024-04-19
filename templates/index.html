@@ -75,9 +75,7 @@
             </form>
         </div>
         {{ block "shopping-list" . }}
-        <ul
-            id="shopping-list"
-        >
+        <ul id="shopping-list">
             {{ range .ShoppingList }}
             {{ block "shopping-list-item" . }}
             <li
@@ -102,7 +100,6 @@
                                 class="handle mt-1 w-full rounded-md border-gray-200 shadow-sm sm:text-sm"
                                 hx-post="/shopping-list/edit"
                                 hx-trigger="keyup changed delay:1s"
-                                hx-target="#shopping-list-{{.IDHex}}"
                                 hx-include="this"
                             />
                         </form>

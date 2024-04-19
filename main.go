@@ -186,6 +186,8 @@ func main() {
 		var oldItem string
 		var updatedItem string
 		for k, v := range r.PostForm {
+      fmt.Printf("k = %+v\n", k)
+      fmt.Printf("v = %+v\n", v)
 			oldItem = k
 			updatedItem = v[0]
 			break

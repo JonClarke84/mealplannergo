@@ -96,16 +96,22 @@ func addShoppingListItem(client *mongo.Client, itemName string) (ShoppingListIte
   return newItem, nil
 }
 
-func updateShoppingListItem(client *mongo.Client, oldItem string, newItem string) error {
+func updateShoppingListItem(client *mongo.Client, itemId string, newItem string) error {
+  itemIdFromHex, err := primitive.ObjectIDFromHex(itemId)
+  if err != nil {
+    fmt.Printf("Error converting item to object ID: %s\n", err)
+    return err
+  }
 	collection := client.Database("GoShopping").Collection("shopping-lists")
-	filter := bson.D{{Key: "ShoppingList", Value: oldItem}}
-	update := bson.D{{Key: "$set", Value: bson.D{{Key: "ShoppingList.$", Value: newItem}}}}
-	_, err := collection.UpdateOne(context.Background(), filter, update)
-	if err != nil {
-		fmt.Printf("Error updating shopping list item: %s\n", err)
-		return err
-	}
-	return nil
+  filter := bson.D{{}}
+  update := bson.D{{Key: "$set", Value: bson.D{{Key: "ShoppingList.$[element].Item", Value: newItem}}}}
+  options := options.UpdateOptions{
+    ArrayFilters: &options.ArrayFilters{
+      Filters: []interface{}{bson.D{{Key: "element.Id", Value: itemIdFromHex}}},
+    },
+  }
+  _, err = collection.UpdateOne(context.Background(), filter, update, &options)
+  return nil
 }
 
 func deleteShoppingListItem(client *mongo.Client, item string) error {
@@ -115,9 +121,7 @@ func deleteShoppingListItem(client *mongo.Client, item string) error {
 		return err
 	}
 	collection := client.Database("GoShopping").Collection("shopping-lists")
-  // find first document in Collection
   filter := bson.D{{}}
-  // delete item from ShoppingList array
   update := bson.D{{Key: "$pull", Value: bson.D{{Key: "ShoppingList", Value: bson.D{{Key: "Id", Value: objectIdFromHex}}}}}}
   _, err = collection.UpdateOne(context.Background(), filter, update)
   if err != nil {
