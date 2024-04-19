@@ -186,12 +186,12 @@ func main() {
 		var oldItem string
 		var updatedItem string
 		for k, v := range r.PostForm {
-			oldItem = k
+			itemId = k
 			updatedItem = v[0]
 			break
 		}
 
-		if err := updateShoppingListItem(client, oldItem, updatedItem); err != nil {
+		if err := updateShoppingListItem(client, itemId, updatedItem); err != nil {
 			http.Error(w, "Failed to update meal", http.StatusInternalServerError)
 			return
 		}
