@@ -143,6 +143,24 @@ func sortShoppingList(client *mongo.Client, newItemOrder []string) error {
 	return nil
 }
 
+func tickShoppingListItem(client *mongo.Client, itemId string, Ticked bool) error {
+  itemIdFromHex, err := primitive.ObjectIDFromHex(itemId)
+  if err != nil {
+    fmt.Printf("Error converting item to object ID: %s\n", err)
+    return err
+  }
+  collection := client.Database("GoShopping").Collection("shopping-lists")
+  filter := bson.D{{}}
+  update := bson.D{{Key: "$set", Value: bson.D{{Key: "ShoppingList.$[element].Ticked", Value: Ticked}}}}
+  options := options.UpdateOptions{
+    ArrayFilters: &options.ArrayFilters{
+      Filters: []interface{}{bson.D{{Key: "element.Id", Value: itemIdFromHex}}},
+    },
+  }
+  _, err = collection.UpdateOne(context.Background(), filter, update, &options)
+  return nil
+}
+
 func getMealPlan(client *mongo.Client) (MealPlan, error) {
 	// find the first document in the collection
 	collection := client.Database("GoShopping").Collection("meal-plans")

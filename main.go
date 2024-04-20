@@ -70,7 +70,6 @@ func main() {
 			ShoppingList: shoppingList,
 		}
 
-    fmt.Printf("pageData = %+v\n", pageData)
     tmpl.Execute(w, pageData)
   })
 	
@@ -133,6 +132,39 @@ func main() {
 			w.WriteHeader(http.StatusOK)
 		}
 	})
+
+  http.HandleFunc("/shopping-list/tick", func(w http.ResponseWriter, r *http.Request) {
+    if err := r.ParseForm(); err != nil {
+      fmt.Printf("Error parsing shopping list: %s\n", err)
+      return
+    }
+    var itemId string
+    var ticked bool
+
+    for k, v := range r.PostForm {
+      itemId = k
+      ticked = v[0] == "on"
+      break
+    }
+
+    if err := tickShoppingListItem(client, itemId, ticked); err != nil {
+      http.Error(w, "Failed to tick shopping list item", http.StatusInternalServerError)
+      return
+    }
+
+    shoppingList, err := getShoppingList(client)
+    if err != nil {
+      fmt.Printf("Error getting this week's shopping list: %s\n", err)
+      return
+    }
+
+    tmpl, err := template.ParseFiles("templates/index.html")
+    if err != nil {
+      http.Error(w, err.Error(), http.StatusInternalServerError)
+      return
+    }
+    tmpl.ExecuteTemplate(w, "shopping-list", shoppingList)
+  })
 
 	// http.HandleFunc("/shopping-list/sort", func(w http.ResponseWriter, r *http.Request) {
 	// 	if err := r.ParseForm(); err != nil {

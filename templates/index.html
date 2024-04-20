@@ -88,7 +88,19 @@
                     >
                         <div class="flex items-center pl-4 pr-4">
                             &#8203;
-                        <input type="checkbox" class="size-6 rounded border-gray-300" />
+                        <form>
+                        <input
+                          id="shopping-list-item-{{.IDHex}}-checkbox"
+                          name="{{.IDHex}}"
+                          type="checkbox"
+                          class="size-6 rounded border-gray-300"
+                          hx-post="/shopping-list/tick"
+                          hx-trigger="change"
+                          hx-include="this"
+                          {{ if .Ticked }}checked{{ end }}
+                        />
+                        <input type="hidden" name="{{.IDHex}}" value="off"/>
+                        </form>
                         </div>
                         <form
                             class="w-full"
