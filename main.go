@@ -11,10 +11,10 @@ import (
 )
 
 type ShoppingListItem struct {
-  ID     primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-  IDHex  string             `json:"idHex,omitempty"`
-  Item   string              
-  Ticked bool
+  ID     primitive.ObjectID `bson:"_id,omitempty" json:"ID,omitempty"`
+  IDHex  string             `bson:"IDHex,omitempty" json:"IDHex,omitempty"`
+  Item   string             `bson:"Item" json:"Item"`
+  Ticked bool               `bson:"Ticked" json:"Ticked"`
 }
 
 type ShoppingList struct {
@@ -166,48 +166,40 @@ func main() {
     tmpl.ExecuteTemplate(w, "shopping-list", shoppingList)
   })
 
-	// http.HandleFunc("/shopping-list/sort", func(w http.ResponseWriter, r *http.Request) {
-	// 	if err := r.ParseForm(); err != nil {
-	// 		fmt.Printf("Error parsing shopping list: %s\n", err)
-	// 		return
-	// 	}
-	//
-	// 	var items []string
-	//
-	// 	for _, v := range r.PostForm {
-	// 		items = append(items, v...)
-	// 	}
-	//
-	// 	if err := sortShoppingList(client, items); err != nil {
-	// 		http.Error(w, "Failed to sort shopping list", http.StatusInternalServerError)
-	// 		return
-	// 	}
-	//
- //    shoppingListParentId, err := getShoppingListParentId(client)
- //    if err != nil {
- //      fmt.Printf("Error getting shopping list parent id: %s\n", err)
- //      return
- //    }
-	//
- //    shoppingList, err := getShoppingList(client, shoppingListParentId)
- //    if err != nil {
- //      fmt.Printf("Error getting shoppingList: %s\n", err)
- //      return
- //    }
-	//
-	// 	newestList, err := getShoppingListItems(client, shoppingList)
-	// 	if err != nil {
-	// 		fmt.Printf("Error getting this week's shopping list: %s\n", err)
-	// 		return
-	// 	}
-	//
-	// 	tmpl, err := template.ParseFiles("templates/index.html")
-	// 	if err != nil {
-	// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-	// 		return
-	// 	}
-	// 	tmpl.ExecuteTemplate(w, "shopping-list", newestList)
-	// })
+ 
+ 
+	http.HandleFunc("/shopping-list/sort", func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			fmt.Printf("Error parsing shopping list: %s\n", err)
+			return
+		}
+
+    var m = make(map[string]bool)
+    var ids = []string{}
+
+    addIfIdIsUnique := func(id string) {
+      if (m[id]) {
+        return
+      }
+      ids = append(ids, id)
+      m[id] = true
+    }
+    
+    for k, _ := range r.PostForm {
+     addIfIdIsUnique(k)
+    }
+    
+    _, err := sortShoppingList(client, ids)
+    if err != nil {
+      fmt.Printf("Error sorting shopping list: %s\n", err)
+      return
+    }
+    
+    shoppingListToReturn, err := getShoppingList(client)
+
+    tmpl := template.Must(template.ParseFiles("templates/index.html"))
+    tmpl.ExecuteTemplate(w, "shopping-list", shoppingListToReturn)
+	})
 
 	http.HandleFunc("/shopping-list/edit", func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {

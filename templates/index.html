@@ -75,7 +75,14 @@
             </form>
         </div>
         {{ block "shopping-list" . }}
-        <ul id="shopping-list" class="sortable">
+        <ul 
+          id="shopping-list"
+          class="sortable"
+          hx-include="this"
+          hx-swap="outerHTML"
+          hx-post="/shopping-list/sort"
+          hx-trigger="end"
+        >
             {{ range .ShoppingList }}
             {{ block "shopping-list-item" . }}
             <li
@@ -145,7 +152,7 @@
             </li>
             {{ end }}
             {{ end }}
-            {{ end }}
+          {{ end }}
         </ul>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>

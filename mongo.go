@@ -40,11 +40,7 @@ func getShoppingList(client *mongo.Client) ([]ShoppingListItem, error) {
 
   var document struct {
     ID           primitive.ObjectID `bson:"_id"`
-    ShoppingList []struct {
-      ID     primitive.ObjectID `bson:"Id"`
-      Item   string             `bson:"Item"`
-      Ticked bool               `bson:"Ticked"`
-    } `bson:"ShoppingList"`
+    ShoppingList []ShoppingListItem `bson:"ShoppingList"`
   }
 
   err := collection.FindOne(context.Background(), bson.D{}).Decode(&document)
@@ -52,17 +48,7 @@ func getShoppingList(client *mongo.Client) ([]ShoppingListItem, error) {
     return nil, err
   }
 
-  shoppingList := make([]ShoppingListItem, len(document.ShoppingList))
-  for i, item := range document.ShoppingList {
-    shoppingList[i] = ShoppingListItem{
-      ID:     item.ID,
-      IDHex:  item.ID.Hex(),
-      Item:   item.Item,
-      Ticked: item.Ticked,
-    }
-  }
-
-  return shoppingList, nil
+  return document.ShoppingList, nil
 }
 
 func updateMeal(client *mongo.Client, day string, meal string) error {
@@ -131,16 +117,32 @@ func deleteShoppingListItem(client *mongo.Client, item string) error {
   return nil
 }
 
-func sortShoppingList(client *mongo.Client, newItemOrder []string) error {
-	collection := client.Database("GoShopping").Collection("shopping-lists")
-	filter := bson.D{{}}
-	update := bson.D{{Key: "$set", Value: bson.D{{Key: "ShoppingList", Value: newItemOrder}}}}
-	_, err := collection.UpdateOne(context.Background(), filter, update)
-	if err != nil {
-		fmt.Printf("Error sorting shopping list: %s\n", err)
-		return err
-	}
-	return nil
+func sortShoppingList(client *mongo.Client, ids []string) ([]ShoppingListItem, error) {
+  var newShoppingList []ShoppingListItem
+  currentShoppingList, err := getShoppingList(client)
+  if err != nil {
+    fmt.Printf("Error getting shopping list: %s\n", err)
+    return newShoppingList, err
+  }
+  fmt.Printf("ids: %+v\n", ids)
+  for _, id := range ids {
+    for _, item := range currentShoppingList {
+      if item.IDHex == id {
+        newShoppingList = append(newShoppingList, item)
+      }
+    }
+  }
+ 
+  collection := client.Database("GoShopping").Collection("shopping-lists")
+  filter := bson.D{{}}
+  update := bson.D{{Key: "$set", Value: bson.D{{Key: "ShoppingList", Value: newShoppingList}}}}
+  _, err = collection.UpdateOne(context.Background(), filter, update)
+  if err != nil {
+    fmt.Printf("Error sorting shopping list: %s\n", err)
+    return newShoppingList, err
+  }
+  fmt.Printf("Sorted shopping list: %v\n", newShoppingList)
+  return newShoppingList, nil
 }
 
 func tickShoppingListItem(client *mongo.Client, itemId string, Ticked bool) error {
