@@ -147,14 +147,9 @@ func main() {
       break
     }
 
-    if err := tickShoppingListItem(client, itemId, ticked); err != nil {
-      http.Error(w, "Failed to tick shopping list item", http.StatusInternalServerError)
-      return
-    }
-
-    shoppingList, err := getShoppingList(client)
+    shoppingListItem, err := tickShoppingListItem(client, itemId, ticked)
     if err != nil {
-      fmt.Printf("Error getting this week's shopping list: %s\n", err)
+      fmt.Printf("Error ticking shopping list item: %s\n", err)
       return
     }
 
@@ -163,7 +158,7 @@ func main() {
       http.Error(w, err.Error(), http.StatusInternalServerError)
       return
     }
-    tmpl.ExecuteTemplate(w, "shopping-list", shoppingList)
+    tmpl.ExecuteTemplate(w, "shopping-list-item", shoppingListItem)
   })
  
 	http.HandleFunc("/shopping-list/sort", func(w http.ResponseWriter, r *http.Request) {

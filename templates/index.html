@@ -105,6 +105,7 @@
                           hx-post="/shopping-list/tick"
                           hx-trigger="change"
                           hx-include="this"
+                          hx-target="#shopping-list-item-{{.IDHex}}"
                           {{ if .Ticked }}checked{{ end }}
                         />
                         <input type="hidden" name="{{.IDHex}}" value="off"/>
