@@ -51,6 +51,22 @@ func getShoppingList(client *mongo.Client) ([]ShoppingListItem, error) {
   return document.ShoppingList, nil
 }
 
+func getShoppingListItemFromIDHex(client *mongo.Client, IDHex string) (ShoppingListItem, error) {
+  shoppingList, err := getShoppingList(client)
+  if err != nil {
+    fmt.Printf("Error getting shopping list: %s\n", err)
+    var failedItem ShoppingListItem
+    return failedItem, err
+  }
+  for _, item := range shoppingList {
+    if item.IDHex == IDHex {
+      return item, nil
+    }
+  }
+  return ShoppingListItem{}, nil
+}
+
+
 func updateMeal(client *mongo.Client, day string, meal string) error {
 	collection := client.Database("GoShopping").Collection("meal-plans")
 	filter := bson.D{{Key: "meals", Value: bson.D{{Key: "$elemMatch", Value: bson.D{{Key: "day", Value: day}}}}}}
@@ -82,34 +98,35 @@ func addShoppingListItem(client *mongo.Client, itemName string) (ShoppingListIte
   return newItem, nil
 }
 
-func updateShoppingListItem(client *mongo.Client, itemId string, newItem string) error {
-  itemIdFromHex, err := primitive.ObjectIDFromHex(itemId)
-  if err != nil {
-    fmt.Printf("Error converting item to object ID: %s\n", err)
-    return err
-  }
+func updateShoppingListItem(client *mongo.Client, itemId string, newItem string) (ShoppingListItem, error) {
 	collection := client.Database("GoShopping").Collection("shopping-lists")
   filter := bson.D{{}}
   update := bson.D{{Key: "$set", Value: bson.D{{Key: "ShoppingList.$[element].Item", Value: newItem}}}}
   options := options.UpdateOptions{
     ArrayFilters: &options.ArrayFilters{
-      Filters: []interface{}{bson.D{{Key: "element.Id", Value: itemIdFromHex}}},
+      Filters: []interface{}{bson.D{{Key: "element.IDHex", Value: itemId}}},
     },
   }
-  _, err = collection.UpdateOne(context.Background(), filter, update, &options)
-  return nil
+  _, err := collection.UpdateOne(context.Background(), filter, update, &options)
+  var shoppingListItem ShoppingListItem
+  shoppingList, err := getShoppingList(client)
+  if err != nil {
+    fmt.Printf("Error updating shopping list item: %s\n", err)
+    return shoppingListItem, err
+  }
+  for _, item := range shoppingList {
+    if item.IDHex == itemId {
+      shoppingListItem = item
+    }
+  }
+  return shoppingListItem, nil
 }
 
 func deleteShoppingListItem(client *mongo.Client, item string) error {
-	objectIdFromHex, err := primitive.ObjectIDFromHex(item)
-	if err != nil {
-		fmt.Printf("Error converting item to object ID: %s\n", err)
-		return err
-	}
 	collection := client.Database("GoShopping").Collection("shopping-lists")
   filter := bson.D{{}}
-  update := bson.D{{Key: "$pull", Value: bson.D{{Key: "ShoppingList", Value: bson.D{{Key: "Id", Value: objectIdFromHex}}}}}}
-  _, err = collection.UpdateOne(context.Background(), filter, update)
+  update := bson.D{{Key: "$pull", Value: bson.D{{Key: "ShoppingList", Value: bson.D{{Key: "IDHex", Value: item}}}}}}
+  _, err := collection.UpdateOne(context.Background(), filter, update)
   if err != nil {
     fmt.Printf("Error deleting shopping list item: %s\n", err)
     return err
@@ -124,7 +141,6 @@ func sortShoppingList(client *mongo.Client, ids []string) ([]ShoppingListItem, e
     fmt.Printf("Error getting shopping list: %s\n", err)
     return newShoppingList, err
   }
-  fmt.Printf("ids: %+v\n", ids)
   for _, id := range ids {
     for _, item := range currentShoppingList {
       if item.IDHex == id {

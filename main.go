@@ -165,8 +165,6 @@ func main() {
     }
     tmpl.ExecuteTemplate(w, "shopping-list", shoppingList)
   })
-
- 
  
 	http.HandleFunc("/shopping-list/sort", func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
@@ -215,13 +213,15 @@ func main() {
 			break
 		}
 
-		if err := updateShoppingListItem(client, itemId, updatedItem); err != nil {
-			http.Error(w, "Failed to update meal", http.StatusInternalServerError)
-			return
-		}
 
-		tmpl := template.Must(template.ParseFiles("templates/index.html"))
-		tmpl.ExecuteTemplate(w, "shopping-list-item", updatedItem)
+    shoppingListItem, err := updateShoppingListItem(client, itemId, updatedItem)
+    if err != nil {
+      fmt.Printf("Error updating shopping list item: %s\n", err)
+      return
+    }
+
+    tmpl := template.Must(template.ParseFiles("templates/index.html"))
+    tmpl.ExecuteTemplate(w, "shopping-list-item", shoppingListItem)
 	})
 
 	// start server
