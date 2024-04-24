@@ -15,6 +15,7 @@ type ShoppingListItem struct {
   IDHex  string             `bson:"IDHex,omitempty" json:"IDHex,omitempty"`
   Item   string             `bson:"Item" json:"Item"`
   Ticked bool               `bson:"Ticked" json:"Ticked"`
+  Order  int                `bson:"Order" json:"Order"`
 }
 
 type ShoppingList struct {
@@ -170,16 +171,17 @@ func main() {
     var m = make(map[string]bool)
     var ids = []string{}
 
-    addIfIdIsUnique := func(id string) {
-      if (m[id]) {
-        return
-      }
-      ids = append(ids, id)
-      m[id] = true
-    }
-    
+    form := r.PostForm
+    fmt.Printf("Form: %s\n", form)
     for k, _ := range r.PostForm {
-     addIfIdIsUnique(k)
+      if !m[k] {
+        m[k] = true
+        ids = append(ids, k)
+      }
+    }
+
+    for _, id := range ids {
+      fmt.Printf("Sorted id: %s\n", id)
     }
     
     _, err := sortShoppingList(client, ids)

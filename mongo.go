@@ -79,10 +79,27 @@ func updateMeal(client *mongo.Client, day string, meal string) error {
 }
 
 func addShoppingListItem(client *mongo.Client, itemName string) (ShoppingListItem, error) {
+  // if itemName is empty, return an Error
+  if itemName == "" {
+    return ShoppingListItem{}, fmt.Errorf("Item name cannot be empty")
+  }
+
+  // create a new Order, which is an int that gives the item's place on the list, the dfault here is on the end. so length + 1
+  
+  shoppingList, err := getShoppingList(client)
+  if err != nil {
+    fmt.Printf("Error getting shopping list: %s\n", err)
+    var failedItem ShoppingListItem
+    return failedItem, err
+  }
+
+  shoppingListLength := len(shoppingList)
+  order := shoppingListLength + 1
+  fmt.Printf("Order: %d\n", order)
   newIdFromTimeStamp := primitive.NewObjectIDFromTimestamp(time.Now())
   collection := client.Database("GoShopping").Collection("shopping-lists") 
   filter := bson.D{{}}
-  update := bson.D{{Key: "$push", Value: bson.D{{Key: "ShoppingList", Value: bson.D{{Key: "Id", Value: newIdFromTimeStamp}, {Key: "Item", Value: itemName}, {Key: "Ticked", Value: false}}}}}}
+  update := bson.D{{Key: "$push", Value: bson.D{{Key: "ShoppingList", Value: bson.D{{Key: "Id", Value: newIdFromTimeStamp}, {Key: "Item", Value: itemName}, {Key: "Ticked", Value: false}, {Key: "Order", Value: "order"}}}}}}}
   _, err := collection.UpdateOne(context.Background(), filter, update)
   if err != nil {
     fmt.Printf("Error adding shopping list item: %s\n", err)
@@ -157,11 +174,11 @@ func sortShoppingList(client *mongo.Client, ids []string) ([]ShoppingListItem, e
     fmt.Printf("Error sorting shopping list: %s\n", err)
     return newShoppingList, err
   }
-  fmt.Printf("Sorted shopping list: %v\n", newShoppingList)
   return newShoppingList, nil
 }
 
 func tickShoppingListItem(client *mongo.Client, itemId string, ticked bool) (ShoppingListItem, error) {
+  collection := client.Database("GoShopping").Collection("shopping-lists")
   filter := bson.D{{}}
   update := bson.D{{Key: "$set", Value: bson.D{{Key: "ShoppingList.$[element].Ticked", Value: ticked}}}}
   options := options.UpdateOptions{
