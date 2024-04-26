@@ -75,7 +75,14 @@
             </form>
         </div>
         {{ block "shopping-list" . }}
-        <ul id="shopping-list" class="sortable">
+        <ul 
+          id="shopping-list"
+          class="sortable"
+          hx-include="this"
+          hx-swap="none"
+          hx-post="/shopping-list/sort"
+          hx-trigger="end"
+        >
             {{ range .ShoppingList }}
             {{ block "shopping-list-item" . }}
             <li
@@ -98,9 +105,11 @@
                           hx-post="/shopping-list/tick"
                           hx-trigger="change"
                           hx-include="this"
+                          hx-target="#shopping-list-item-{{.IDHex}}"
                           {{ if .Ticked }}checked{{ end }}
                         />
                         <input type="hidden" name="{{.IDHex}}" value="off"/>
+                        <input type="hidden" name="order" value="{{.Order}}"/>
                         </form>
                         </div>
                         <form
@@ -114,6 +123,7 @@
                                 hx-post="/shopping-list/edit"
                                 hx-trigger="keyup changed delay:1s"
                                 hx-include="this"
+                                hx-target="#shopping-list-item-{{.IDHex}}"
                             />
                         </form>
                         <div>
@@ -122,6 +132,7 @@
                                 class="flex justify-center hover:text-gray-700 w-10"
                                 hx-delete="/shopping-list?item={{.IDHex}}"
                                 hx-target="#shopping-list-{{.IDHex}}"
+                                hx-swap="outerHTML"
                             >
                                 <span class="sr-only">Delete</span>
                                 <svg
@@ -145,7 +156,7 @@
             </li>
             {{ end }}
             {{ end }}
-            {{ end }}
+          {{ end }}
         </ul>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
@@ -160,7 +171,7 @@
                     filter: ".htmx-indicator",
                     forceFallback: true,
                     handle: '.handle',
-                    delay: 250,
+                    delay: 150,
                     onMove: function(evt) {
                         return evt.related.className.indexOf('htmx-indicator') === -1;
                     }

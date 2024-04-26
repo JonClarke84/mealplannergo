@@ -6,15 +6,17 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+  "strconv"
 
   "go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ShoppingListItem struct {
-  ID     primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-  IDHex  string             `json:"idHex,omitempty"`
-  Item   string              
-  Ticked bool
+  ID     primitive.ObjectID `bson:"_id,omitempty" json:"ID,omitempty"`
+  IDHex  string             `bson:"IDHex,omitempty" json:"IDHex,omitempty"`
+  Item   string             `bson:"Item" json:"Item"`
+  Ticked bool               `bson:"Ticked" json:"Ticked"`
+  Order  int                `bson:"Order" json:"Order"`
 }
 
 type ShoppingList struct {
@@ -69,7 +71,7 @@ func main() {
 			MealPlan:     mealPlan.Meals,
 			ShoppingList: shoppingList,
 		}
-
+    
     tmpl.Execute(w, pageData)
   })
 	
@@ -128,8 +130,14 @@ func main() {
 				http.Error(w, "Failed to delete item", http.StatusInternalServerError)
 				return
 			}
+      shoppingList, err := getShoppingList(client)
+        if err != nil {
+          fmt.Printf("Error getting shopping list: %s\n", err)
+          return
+        }
 
-			w.WriteHeader(http.StatusOK)
+      tmpl := template.Must(template.ParseFiles("templates/index.html"))
+      tmpl.ExecuteTemplate(w, "shopping-list", shoppingList)
 		}
 	})
 
@@ -147,14 +155,9 @@ func main() {
       break
     }
 
-    if err := tickShoppingListItem(client, itemId, ticked); err != nil {
-      http.Error(w, "Failed to tick shopping list item", http.StatusInternalServerError)
-      return
-    }
-
-    shoppingList, err := getShoppingList(client)
+    shoppingListItem, err := tickShoppingListItem(client, itemId, ticked)
     if err != nil {
-      fmt.Printf("Error getting this week's shopping list: %s\n", err)
+      fmt.Printf("Error ticking shopping list item: %s\n", err)
       return
     }
 
@@ -163,51 +166,31 @@ func main() {
       http.Error(w, err.Error(), http.StatusInternalServerError)
       return
     }
-    tmpl.ExecuteTemplate(w, "shopping-list", shoppingList)
+    tmpl.ExecuteTemplate(w, "shopping-list-item", shoppingListItem)
+  })
+ 
+
+  http.HandleFunc("/shopping-list/sort", func(w http.ResponseWriter, r *http.Request) {
+    if err := r.ParseForm(); err != nil {
+        fmt.Printf("Error parsing shopping list: %s\n", err)
+        return
+    }
+    // collect all values of any field named "order" and put them in a slice
+    var newOrder []int
+    for _, v := range r.PostForm["order"] {
+      orderInt, _ := strconv.Atoi(v)
+      newOrder = append(newOrder, orderInt)
+    }
+
+    if err := updateShoppingListOrder(client, newOrder); err != nil {
+        fmt.Printf("Error sorting shopping list: %s\n", err)
+        http.Error(w, "Failed to sort shopping list", http.StatusInternalServerError)
+        return
+    }
+
+    w.WriteHeader(http.StatusOK)
   })
 
-	// http.HandleFunc("/shopping-list/sort", func(w http.ResponseWriter, r *http.Request) {
-	// 	if err := r.ParseForm(); err != nil {
-	// 		fmt.Printf("Error parsing shopping list: %s\n", err)
-	// 		return
-	// 	}
-	//
-	// 	var items []string
-	//
-	// 	for _, v := range r.PostForm {
-	// 		items = append(items, v...)
-	// 	}
-	//
-	// 	if err := sortShoppingList(client, items); err != nil {
-	// 		http.Error(w, "Failed to sort shopping list", http.StatusInternalServerError)
-	// 		return
-	// 	}
-	//
- //    shoppingListParentId, err := getShoppingListParentId(client)
- //    if err != nil {
- //      fmt.Printf("Error getting shopping list parent id: %s\n", err)
- //      return
- //    }
-	//
- //    shoppingList, err := getShoppingList(client, shoppingListParentId)
- //    if err != nil {
- //      fmt.Printf("Error getting shoppingList: %s\n", err)
- //      return
- //    }
-	//
-	// 	newestList, err := getShoppingListItems(client, shoppingList)
-	// 	if err != nil {
-	// 		fmt.Printf("Error getting this week's shopping list: %s\n", err)
-	// 		return
-	// 	}
-	//
-	// 	tmpl, err := template.ParseFiles("templates/index.html")
-	// 	if err != nil {
-	// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-	// 		return
-	// 	}
-	// 	tmpl.ExecuteTemplate(w, "shopping-list", newestList)
-	// })
 
 	http.HandleFunc("/shopping-list/edit", func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
@@ -223,13 +206,15 @@ func main() {
 			break
 		}
 
-		if err := updateShoppingListItem(client, itemId, updatedItem); err != nil {
-			http.Error(w, "Failed to update meal", http.StatusInternalServerError)
-			return
-		}
 
-		tmpl := template.Must(template.ParseFiles("templates/index.html"))
-		tmpl.ExecuteTemplate(w, "shopping-list-item", updatedItem)
+    shoppingListItem, err := updateShoppingListItem(client, itemId, updatedItem)
+    if err != nil {
+      fmt.Printf("Error updating shopping list item: %s\n", err)
+      return
+    }
+
+    tmpl := template.Must(template.ParseFiles("templates/index.html"))
+    tmpl.ExecuteTemplate(w, "shopping-list-item", shoppingListItem)
 	})
 
 	// start server
