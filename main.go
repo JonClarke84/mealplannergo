@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+  "strconv"
 
   "go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -70,7 +71,7 @@ func main() {
 			MealPlan:     mealPlan.Meals,
 			ShoppingList: shoppingList,
 		}
-
+    
     tmpl.Execute(w, pageData)
   })
 	
@@ -162,39 +163,30 @@ func main() {
     tmpl.ExecuteTemplate(w, "shopping-list-item", shoppingListItem)
   })
  
-	http.HandleFunc("/shopping-list/sort", func(w http.ResponseWriter, r *http.Request) {
-		if err := r.ParseForm(); err != nil {
-			fmt.Printf("Error parsing shopping list: %s\n", err)
-			return
-		}
 
-    var m = make(map[string]bool)
-    var ids = []string{}
-
-    form := r.PostForm
-    fmt.Printf("Form: %s\n", form)
-    for k, _ := range r.PostForm {
-      if !m[k] {
-        m[k] = true
-        ids = append(ids, k)
-      }
+  http.HandleFunc("/shopping-list/sort", func(w http.ResponseWriter, r *http.Request) {
+    if err := r.ParseForm(); err != nil {
+        fmt.Printf("Error parsing shopping list: %s\n", err)
+        return
+    }
+    // collect all values of any field named "order" and put them in a slice
+    var newOrder []int
+    for _, v := range r.PostForm["order"] {
+      orderInt, _ := strconv.Atoi(v)
+      newOrder = append(newOrder, orderInt)
     }
 
-    for _, id := range ids {
-      fmt.Printf("Sorted id: %s\n", id)
+    if err := updateShoppingListOrder(client, newOrder); err != nil {
+        fmt.Printf("Error sorting shopping list: %s\n", err)
+        http.Error(w, "Failed to sort shopping list", http.StatusInternalServerError)
+        return
     }
-    
-    _, err := sortShoppingList(client, ids)
-    if err != nil {
-      fmt.Printf("Error sorting shopping list: %s\n", err)
-      return
-    }
-    
-    shoppingListToReturn, err := getShoppingList(client)
 
-    tmpl := template.Must(template.ParseFiles("templates/index.html"))
-    tmpl.ExecuteTemplate(w, "shopping-list", shoppingListToReturn)
-	})
+   // return status 200
+    w.WriteHeader(http.StatusOK)
+    // http.Redirect(w, r, "/", http.StatusFound)
+  })
+
 
 	http.HandleFunc("/shopping-list/edit", func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {

@@ -79,7 +79,7 @@
           id="shopping-list"
           class="sortable"
           hx-include="this"
-          hx-swap="outerHTML"
+          hx-swap="none"
           hx-post="/shopping-list/sort"
           hx-trigger="end"
         >
@@ -109,6 +109,7 @@
                           {{ if .Ticked }}checked{{ end }}
                         />
                         <input type="hidden" name="{{.IDHex}}" value="off"/>
+                        <input type="hidden" name="order" value="{{.Order}}"/>
                         </form>
                         </div>
                         <form
