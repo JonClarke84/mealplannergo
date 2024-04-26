@@ -130,8 +130,14 @@ func main() {
 				http.Error(w, "Failed to delete item", http.StatusInternalServerError)
 				return
 			}
+      shoppingList, err := getShoppingList(client)
+        if err != nil {
+          fmt.Printf("Error getting shopping list: %s\n", err)
+          return
+        }
 
-			w.WriteHeader(http.StatusOK)
+      tmpl := template.Must(template.ParseFiles("templates/index.html"))
+      tmpl.ExecuteTemplate(w, "shopping-list", shoppingList)
 		}
 	})
 
@@ -182,9 +188,7 @@ func main() {
         return
     }
 
-   // return status 200
     w.WriteHeader(http.StatusOK)
-    // http.Redirect(w, r, "/", http.StatusFound)
   })
 
 

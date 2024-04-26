@@ -132,6 +132,7 @@
                                 class="flex justify-center hover:text-gray-700 w-10"
                                 hx-delete="/shopping-list?item={{.IDHex}}"
                                 hx-target="#shopping-list-{{.IDHex}}"
+                                hx-swap="outerHTML"
                             >
                                 <span class="sr-only">Delete</span>
                                 <svg
@@ -170,7 +171,7 @@
                     filter: ".htmx-indicator",
                     forceFallback: true,
                     handle: '.handle',
-                    delay: 250,
+                    delay: 150,
                     onMove: function(evt) {
                         return evt.related.className.indexOf('htmx-indicator') === -1;
                     }
