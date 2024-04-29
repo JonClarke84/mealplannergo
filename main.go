@@ -6,22 +6,22 @@ import (
 	"html/template"
 	"net/http"
 	"os"
-  "strconv"
+	"strconv"
 
-  "go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ShoppingListItem struct {
-  ID     primitive.ObjectID `bson:"_id,omitempty" json:"ID,omitempty"`
-  IDHex  string             `bson:"IDHex,omitempty" json:"IDHex,omitempty"`
-  Item   string             `bson:"Item" json:"Item"`
-  Ticked bool               `bson:"Ticked" json:"Ticked"`
-  Order  int                `bson:"Order" json:"Order"`
+	ID     primitive.ObjectID `bson:"_id,omitempty" json:"ID,omitempty"`
+	IDHex  string             `bson:"IDHex,omitempty" json:"IDHex,omitempty"`
+	Item   string             `bson:"Item" json:"Item"`
+	Ticked bool               `bson:"Ticked" json:"Ticked"`
+	Order  int                `bson:"Order" json:"Order"`
 }
 
 type ShoppingList struct {
-  ShoppingList []ShoppingListItem
-  ID primitive.ObjectID
+	ShoppingList []ShoppingListItem
+	ID           primitive.ObjectID
 }
 
 type Meal struct {
@@ -71,10 +71,9 @@ func main() {
 			MealPlan:     mealPlan.Meals,
 			ShoppingList: shoppingList,
 		}
-    
-    tmpl.Execute(w, pageData)
-  })
-	
+
+		tmpl.Execute(w, pageData)
+	})
 
 	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public/"))))
 
@@ -115,10 +114,10 @@ func main() {
 		if r.Method == "POST" {
 			item := r.PostFormValue("item")
 			newItem, err := addShoppingListItem(client, item)
-      if err != nil {
-        fmt.Printf("Error adding shopping list item: %s\n", err)
-        return
-      }
+			if err != nil {
+				fmt.Printf("Error adding shopping list item: %s\n", err)
+				return
+			}
 			tmpl := template.Must(template.ParseFiles("templates/index.html"))
 			tmpl.ExecuteTemplate(w, "shopping-list-item", newItem)
 		}
@@ -130,67 +129,65 @@ func main() {
 				http.Error(w, "Failed to delete item", http.StatusInternalServerError)
 				return
 			}
-      shoppingList, err := getShoppingList(client)
-        if err != nil {
-          fmt.Printf("Error getting shopping list: %s\n", err)
-          return
-        }
+			shoppingList, err := getShoppingList(client)
+			if err != nil {
+				fmt.Printf("Error getting shopping list: %s\n", err)
+				return
+			}
 
-      tmpl := template.Must(template.ParseFiles("templates/index.html"))
-      tmpl.ExecuteTemplate(w, "shopping-list", shoppingList)
+			tmpl := template.Must(template.ParseFiles("templates/index.html"))
+			tmpl.ExecuteTemplate(w, "shopping-list", shoppingList)
 		}
 	})
 
-  http.HandleFunc("/shopping-list/tick", func(w http.ResponseWriter, r *http.Request) {
-    if err := r.ParseForm(); err != nil {
-      fmt.Printf("Error parsing shopping list: %s\n", err)
-      return
-    }
-    var itemId string
-    var ticked bool
+	http.HandleFunc("/shopping-list/tick", func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			fmt.Printf("Error parsing shopping list: %s\n", err)
+			return
+		}
+		var itemId string
+		var ticked bool
 
-    for k, v := range r.PostForm {
-      itemId = k
-      ticked = v[0] == "on"
-      break
-    }
+		for k, v := range r.PostForm {
+			itemId = k
+			ticked = v[0] == "on"
+			break
+		}
 
-    shoppingListItem, err := tickShoppingListItem(client, itemId, ticked)
-    if err != nil {
-      fmt.Printf("Error ticking shopping list item: %s\n", err)
-      return
-    }
+		shoppingListItem, err := tickShoppingListItem(client, itemId, ticked)
+		if err != nil {
+			fmt.Printf("Error ticking shopping list item: %s\n", err)
+			return
+		}
 
-    tmpl, err := template.ParseFiles("templates/index.html")
-    if err != nil {
-      http.Error(w, err.Error(), http.StatusInternalServerError)
-      return
-    }
-    tmpl.ExecuteTemplate(w, "shopping-list-item", shoppingListItem)
-  })
- 
+		tmpl, err := template.ParseFiles("templates/index.html")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		tmpl.ExecuteTemplate(w, "shopping-list-item", shoppingListItem)
+	})
 
-  http.HandleFunc("/shopping-list/sort", func(w http.ResponseWriter, r *http.Request) {
-    if err := r.ParseForm(); err != nil {
-        fmt.Printf("Error parsing shopping list: %s\n", err)
-        return
-    }
-    // collect all values of any field named "order" and put them in a slice
-    var newOrder []int
-    for _, v := range r.PostForm["order"] {
-      orderInt, _ := strconv.Atoi(v)
-      newOrder = append(newOrder, orderInt)
-    }
+	http.HandleFunc("/shopping-list/sort", func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			fmt.Printf("Error parsing shopping list: %s\n", err)
+			return
+		}
+		// collect all values of any field named "order" and put them in a slice
+		var newOrder []int
+		for _, v := range r.PostForm["order"] {
+			orderInt, _ := strconv.Atoi(v)
+			newOrder = append(newOrder, orderInt)
+		}
 
-    if err := updateShoppingListOrder(client, newOrder); err != nil {
-        fmt.Printf("Error sorting shopping list: %s\n", err)
-        http.Error(w, "Failed to sort shopping list", http.StatusInternalServerError)
-        return
-    }
+		if err := updateShoppingListOrder(client, newOrder); err != nil {
+			fmt.Printf("Error sorting shopping list: %s\n", err)
+			http.Error(w, "Failed to sort shopping list", http.StatusInternalServerError)
+			return
+		}
 
-    w.WriteHeader(http.StatusOK)
-  })
-
+		w.WriteHeader(http.StatusOK)
+	})
 
 	http.HandleFunc("/shopping-list/edit", func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
@@ -206,15 +203,14 @@ func main() {
 			break
 		}
 
+		shoppingListItem, err := updateShoppingListItem(client, itemId, updatedItem)
+		if err != nil {
+			fmt.Printf("Error updating shopping list item: %s\n", err)
+			return
+		}
 
-    shoppingListItem, err := updateShoppingListItem(client, itemId, updatedItem)
-    if err != nil {
-      fmt.Printf("Error updating shopping list item: %s\n", err)
-      return
-    }
-
-    tmpl := template.Must(template.ParseFiles("templates/index.html"))
-    tmpl.ExecuteTemplate(w, "shopping-list-item", shoppingListItem)
+		tmpl := template.Must(template.ParseFiles("templates/index.html"))
+		tmpl.ExecuteTemplate(w, "shopping-list-item", shoppingListItem)
 	})
 
 	// start server
