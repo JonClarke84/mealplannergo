@@ -16,12 +16,12 @@ type ShoppingListItem struct {
 	IDHex  string             `bson:"IDHex,omitempty" json:"IDHex,omitempty"`
 	Item   string             `bson:"Item" json:"Item"`
 	Ticked bool               `bson:"Ticked" json:"Ticked"`
-	Order  int                `bson:"Order" json:"Order"`
 }
 
 type ShoppingList struct {
 	ShoppingList []ShoppingListItem
 	ID           primitive.ObjectID
+	SortOrder    []primitive.ObjectID
 }
 
 type Meal struct {
@@ -180,11 +180,11 @@ func main() {
 			newOrder = append(newOrder, orderInt)
 		}
 
-		if err := updateShoppingListOrder(client, newOrder); err != nil {
-			fmt.Printf("Error sorting shopping list: %s\n", err)
-			http.Error(w, "Failed to sort shopping list", http.StatusInternalServerError)
-			return
-		}
+		// if err := updateShoppingListOrder(client, newOrder); err != nil {
+		// 	fmt.Printf("Error sorting shopping list: %s\n", err)
+		// 	http.Error(w, "Failed to sort shopping list", http.StatusInternalServerError)
+		// 	return
+		// }
 
 		w.WriteHeader(http.StatusOK)
 	})
