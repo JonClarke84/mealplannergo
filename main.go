@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"os"
-	"strconv"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -16,12 +17,12 @@ type ShoppingListItem struct {
 	IDHex  string             `bson:"IDHex,omitempty" json:"IDHex,omitempty"`
 	Item   string             `bson:"Item" json:"Item"`
 	Ticked bool               `bson:"Ticked" json:"Ticked"`
-	Order  int                `bson:"Order" json:"Order"`
 }
 
 type ShoppingList struct {
 	ShoppingList []ShoppingListItem
 	ID           primitive.ObjectID
+	SortOrder    []primitive.ObjectID
 }
 
 type Meal struct {
@@ -35,6 +36,15 @@ type MealPlan struct {
 type PageData struct {
 	MealPlan     []Meal
 	ShoppingList []ShoppingListItem
+}
+
+type Order struct {
+	ID       string `json:"id"`
+	Position int    `json:"position"`
+}
+
+type OrderUpdate struct {
+	Order []Order `json:"order"`
 }
 
 func main() {
@@ -169,23 +179,25 @@ func main() {
 	})
 
 	http.HandleFunc("/shopping-list/sort", func(w http.ResponseWriter, r *http.Request) {
-		if err := r.ParseForm(); err != nil {
-			fmt.Printf("Error parsing shopping list: %s\n", err)
-			return
-		}
-		// collect all values of any field named "order" and put them in a slice
-		var newOrder []int
-		for _, v := range r.PostForm["order"] {
-			orderInt, _ := strconv.Atoi(v)
-			newOrder = append(newOrder, orderInt)
-		}
-
-		if err := updateShoppingListOrder(client, newOrder); err != nil {
-			fmt.Printf("Error sorting shopping list: %s\n", err)
-			http.Error(w, "Failed to sort shopping list", http.StatusInternalServerError)
+		if r.Method != http.MethodPost {
+			http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 			return
 		}
 
+		var updates OrderUpdate
+		err := json.NewDecoder(r.Body).Decode(&updates)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		// Update the order in the database
+		err = sortShoppingList(client, updates.Order)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		// Respond with OK status
 		w.WriteHeader(http.StatusOK)
 	})
 
