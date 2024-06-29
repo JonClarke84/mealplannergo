@@ -81,14 +81,7 @@
         </form>
       </div>
       {{ block "shopping-list" . }}
-      <ul
-        id="shopping-list"
-        class="sortable"
-        hx-include="this"
-        hx-swap="none"
-        hx-post="/shopping-list/sort"
-        hx-trigger="end"
-      >
+      <ul id="shopping-list" class="sortable">
         {{ range .ShoppingList }} {{ block "shopping-list-item" . }}
         <li id="shopping-list-{{.IDHex}}" class="handle">
           <div class="mt-2 w-full" id="shopping-list-item-{{.IDHex}}">
@@ -177,8 +170,42 @@
             onMove: function (evt) {
               return evt.related.className.indexOf("htmx-indicator") === -1;
             },
+            onEnd: function (evt) {
+              updateOrder(evt.to);
+            },
           });
         });
+      }
+
+      function updateOrder(sortableElement) {
+        const items = sortableElement.children;
+        const order = Array.from(items).map((item, index) => ({
+          id: item.id.replace("shopping-list-", ""),
+          position: index + 1,
+        }));
+
+        fetch("/shopping-list/sort", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ order }),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+            return response.json();
+          })
+          .then((data) => {
+            console.log("Order updated:", data);
+          })
+          .catch((error) => {
+            console.error(
+              "There was a problem with the fetch operation:",
+              error,
+            );
+          });
       }
 
       // Run on initial page load
@@ -186,7 +213,7 @@
 
       // Re-run whenever HTMX swaps in new content
       document.body.addEventListener("htmx:afterSwap", function (event) {
-        if (event.detail.target.ID === "shopping-list") {
+        if (event.detail.target.id === "shopping-list") {
           initializeSortable();
         }
       });

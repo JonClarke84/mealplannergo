@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"os"
-	"strconv"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -35,6 +36,15 @@ type MealPlan struct {
 type PageData struct {
 	MealPlan     []Meal
 	ShoppingList []ShoppingListItem
+}
+
+type Order struct {
+	ID       string `json:"id"`
+	Position int    `json:"position"`
+}
+
+type OrderUpdate struct {
+	Order []Order `json:"order"`
 }
 
 func main() {
@@ -169,23 +179,22 @@ func main() {
 	})
 
 	http.HandleFunc("/shopping-list/sort", func(w http.ResponseWriter, r *http.Request) {
-		if err := r.ParseForm(); err != nil {
-			fmt.Printf("Error parsing shopping list: %s\n", err)
+		if r.Method != http.MethodPost {
+			http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 			return
 		}
-		// collect all values of any field named "order" and put them in a slice
-		var newOrder []int
-		for _, v := range r.PostForm["order"] {
-			orderInt, _ := strconv.Atoi(v)
-			newOrder = append(newOrder, orderInt)
+
+		var updates OrderUpdate
+		err := json.NewDecoder(r.Body).Decode(&updates)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
-		// if err := updateShoppingListOrder(client, newOrder); err != nil {
-		// 	fmt.Printf("Error sorting shopping list: %s\n", err)
-		// 	http.Error(w, "Failed to sort shopping list", http.StatusInternalServerError)
-		// 	return
-		// }
+		// Log the received JSON
+		log.Printf("Received order update: %+v\n", updates.Order)
 
+		// Respond with OK status
 		w.WriteHeader(http.StatusOK)
 	})
 
