@@ -191,9 +191,12 @@ func main() {
 			return
 		}
 
-		// Log the received JSON
-		log.Printf("Received order update: %+v\n", updates.Order)
-
+		// Update the order in the database
+		err = sortShoppingList(client, updates.Order)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		// Respond with OK status
 		w.WriteHeader(http.StatusOK)
 	})

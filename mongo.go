@@ -49,7 +49,21 @@ func getShoppingList(client *mongo.Client) ([]ShoppingListItem, error) {
 		return nil, err
 	}
 
-	return document.ShoppingList, nil
+	// Create a map of item ID to ShoppingListItem for easy lookup
+	itemMap := make(map[primitive.ObjectID]ShoppingListItem)
+	for _, item := range document.ShoppingList {
+		itemMap[item.ID] = item
+	}
+
+	// Sort the shopping list based on the SortOrder
+	var sortedShoppingList []ShoppingListItem
+	for _, id := range document.SortOrder {
+		if item, exists := itemMap[id]; exists {
+			sortedShoppingList = append(sortedShoppingList, item)
+		}
+	}
+
+	return sortedShoppingList, nil
 }
 
 func getShoppingListItemFromIDHex(client *mongo.Client, IDHex string) (ShoppingListItem, error) {
@@ -218,4 +232,30 @@ func getMealPlan(client *mongo.Client) (MealPlan, error) {
 		return mealPlan, err
 	}
 	return mealPlan, nil
+}
+
+func sortShoppingList(client *mongo.Client, newOrder []Order) error {
+	collection := client.Database("GoShopping").Collection("shopping-lists")
+
+	// Create a new array of ObjectIDs in the new order
+	var newSortOrder []primitive.ObjectID
+	for _, order := range newOrder {
+		id, err := primitive.ObjectIDFromHex(order.ID)
+		if err != nil {
+			return fmt.Errorf("invalid object ID: %s", order.ID)
+		}
+		newSortOrder = append(newSortOrder, id)
+	}
+
+	// Update the SortOrder in the shopping list document
+	filter := bson.D{} // This filter needs to be specific to the document you're updating
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: "SortOrder", Value: newSortOrder}}}}
+
+	_, err := collection.UpdateOne(context.Background(), filter, update)
+	if err != nil {
+		fmt.Printf("Error updating shopping list order: %s\n", err)
+		return err
+	}
+
+	return nil
 }
