@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Meal Planner with HTMX</title>
+    <link rel="stylesheet" href="/public/css/index.css" />
+    <script src="/public/htmx.min.js"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script>
+      tailwind.config = {};
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="text-3xl font-bold">Meal Planner</h1>
+      <ul>
+        {{ range .MealPlan }} {{ block "meal-input" . }}
+        <li class="relative mt-6" id="{{.Day}}-container">
+          <label
+            for="{{.Day}}-input"
+            class="relative block rounded-md border border-gray-200 shadow-sm focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600"
+          >
+            <input
+              type="text"
+              name="{{.Day}}"
+              id="{{.Day}}-input"
+              value="{{.Meal}}"
+              placeholder="Start typing..."
+              class="w-full peer border-none bg-transparent placeholder-transparent focus:border-transparent focus:outline-none focus:ring-0"
+              hx-post="/meal"
+              hx-trigger="keyup changed delay:1s"
+              hx-target="#{{.Day}}-container"
+            />
+            <span
+              class="pointer-events-none absolute start-2.5 top-0 -translate-y-1/2 p-0.5 text-xs text-gray-700 transition-all peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-focus:top-0 peer-focus:text-xs"
+            >
+              {{.Day}}
+            </span>
+          </label>
+          {{ end }}
+        </li>
+        {{ end }}
+      </ul>
+      <h2 class="text-2xl font-bold m-4">Shopping List</h2>
+      <div>
+        <form
+          id="shopping-list-form"
+          hx-post="/shopping-list"
+          hx-target="#shopping-list"
+          hx-swap="beforeend"
+        >
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 5px;
+              background: #ffffff;
+              border: 1px solid #ddd;
+              padding: 8px;
+              margin-bottom: 8px;
+            "
+            class="flex items-center cursor-pointer items-start rounded-lg border border-gray-200 p-2 bg-white transition hover:bg-gray-50"
+          >
+            <input
+              type="text"
+              id="shopping-list-input"
+              name="item"
+              style="flex-grow: 1"
+              placeholder="Start typing to add an item..."
+              class="mt-1 w-full rounded-md border-gray-200 shadow-sm sm:text-sm"
+            />
+            <button
+              type="submit"
+              class="flex justify-center hover:text-gray-700 w-10"
+            >
+              ➕
+            </button>
+          </div>
+        </form>
+      </div>
+      {{ block "shopping-list" . }}
+      <ul id="shopping-list" class="sortable">
+        {{ range .ShoppingList }} {{ block "shopping-list-item" . }}
+        <li id="shopping-list-{{.IDHex}}" class="handle">
+          <div class="mt-2 w-full" id="shopping-list-item-{{.IDHex}}">
+            <label
+              for="item-{{.IDHex}}"
+              class="flex items-center cursor-pointer items-start rounded-lg border border-gray-200 p-2 bg-white transition hover:bg-gray-50"
+            >
+              <div class="flex items-center pl-4 pr-4">
+                &#8203;
+                <form>
+                  <input
+                    id="shopping-list-item-{{.IDHex}}-checkbox"
+                    name="{{.IDHex}}"
+                    type="checkbox"
+                    class="size-6 rounded border-gray-300"
+                    hx-post="/shopping-list/tick"
+                    hx-trigger="change"
+                    hx-include="this"
+                    hx-target="#shopping-list-item-{{.IDHex}}"
+                    {{
+                    if
+                    .Ticked
+                    }}checked{{
+                    end
+                    }}
+                  />
+                  <input type="hidden" name="{{.IDHex}}" value="off" />
+                </form>
+              </div>
+              <form class="w-full">
+                <input
+                  name="{{.IDHex}}"
+                  type="text"
+                  value="{{.Item}}"
+                  class="mt-1 w-full rounded-md border-gray-200 shadow-sm sm:text-sm"
+                  hx-post="/shopping-list/edit"
+                  hx-trigger="keyup changed delay:1s"
+                  hx-include="this"
+                  hx-target="#shopping-list-item-{{.IDHex}}"
+                />
+              </form>
+              <div>
+                <button
+                  type="button"
+                  class="flex justify-center hover:text-gray-700 w-10"
+                  hx-delete="/shopping-list?item={{.IDHex}}"
+                  hx-target="#shopping-list-{{.IDHex}}"
+                  hx-swap="outerHTML"
+                >
+                  <span class="sr-only">Delete</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    class="h-4 w-4"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M6 6l12 12m0 -12l-12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </label>
+          </div>
+        </li>
+        {{ end }} {{ end }} {{ end }}
+      </ul>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script>
+      function initializeSortable() {
+        var sortables = document.querySelectorAll(".sortable");
+        sortables.forEach(function (sortable) {
+          new Sortable(sortable, {
+            animation: 150,
+            ghostClass: "drag-ghost-class",
+            dragClass: "li-drag-class",
+            filter: ".htmx-indicator",
+            forceFallback: true,
+            handle: ".handle",
+            delay: 150,
+            onMove: function (evt) {
+              return evt.related.className.indexOf("htmx-indicator") === -1;
+            },
+            onEnd: function (evt) {
+              updateOrder(evt.to);
+            },
+          });
+        });
+      }
+
+      function updateOrder(sortableElement) {
+        const items = sortableElement.children;
+        const order = Array.from(items).map((item, index) => ({
+          id: item.id.replace("shopping-list-", ""),
+          position: index + 1,
+        }));
+
+        fetch("/shopping-list/sort", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ order }),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+            return response.json();
+          })
+          .then((data) => {
+            console.log("Order updated:", data);
+          })
+          .catch((error) => {
+            console.error(
+              "There was a problem with the fetch operation:",
+              error,
+            );
+          });
+      }
+
+      // Run on initial page load
+      initializeSortable();
+
+      // Re-run whenever HTMX swaps in new content
+      document.body.addEventListener("htmx:afterSwap", function (event) {
+        if (event.detail.target.id === "shopping-list") {
+          initializeSortable();
+        }
+      });
+    </script>
+  </body>
+</html>

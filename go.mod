@@ -1,4 +1,4 @@
-module mealplannergo
+module github.com/JonClarke84/mealplannergo
 
 // was 1.22.1
 go 1.21
