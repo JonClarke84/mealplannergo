@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Template</title>
+</head>
+<body>
+    <!-- Mock template for testing -->
+    {{ range .MealPlan }}
+        {{ block "meal-input" . }}
+        <div>{{ .Day }}: {{ .Meal }}</div>
+        {{ end }}
+    {{ end }}
+    
+    {{ block "shopping-list" . }}
+    <ul>
+        {{ range .ShoppingList }}
+            {{ block "shopping-list-item" . }}
+            <li>{{ .Item }} {{ if .Ticked }}(checked){{ end }}</li>
+            {{ end }}
+        {{ end }}
+    </ul>
+    {{ end }}
+</body>
+</html>

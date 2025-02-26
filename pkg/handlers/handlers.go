@@ -13,13 +13,13 @@ import (
 
 // Handler contains all the dependencies needed for handling HTTP requests
 type Handler struct {
-	DB *db.MongoDB
+	DB db.DBInterface
 	// Template path relative to where the app is run from
 	TemplatePath string
 }
 
 // New creates a new Handler with the given database connection
-func New(db *db.MongoDB) *Handler {
+func New(db db.DBInterface) *Handler {
 	return &Handler{
 		DB:           db,
 		TemplatePath: "./pkg/templates/index.html",

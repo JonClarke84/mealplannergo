@@ -77,3 +77,31 @@ air -c .air.toml
 # Or use go run for development
 go run ./cmd/server
 ```
+
+## Testing
+
+The project includes a comprehensive test suite with unit tests and integration tests.
+
+```bash
+# Run all tests
+make test
+
+# Run tests with coverage report
+make coverage
+```
+
+Test coverage is a priority for this project. We aim for 100% test coverage to ensure code quality and prevent regressions.
+
+### Test Structure
+
+- **Unit Tests**: Test individual packages in isolation
+  - `pkg/models/models_test.go`: Tests for data models
+  - `pkg/handlers/handlers_test.go`: Tests for HTTP handlers using mocked DB
+  - `pkg/db/mongodb_test.go`: Tests for database operations
+
+- **Integration Tests**: Test API endpoints
+  - `cmd/server/main_test.go`: Tests for API routes
+
+The test suite uses the following libraries:
+- `testify`: For assertions and mocks
+- `httptest`: For HTTP testing
