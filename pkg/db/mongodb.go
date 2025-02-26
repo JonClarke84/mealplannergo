@@ -16,6 +16,9 @@ type MongoDB struct {
 	Client *mongo.Client
 }
 
+// Ensure MongoDB implements DBInterface
+var _ DBInterface = (*MongoDB)(nil)
+
 // NewMongoDB creates a new MongoDB connection
 func NewMongoDB(uri string) (*MongoDB, error) {
 	// connect to MongoDB
