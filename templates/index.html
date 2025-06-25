@@ -156,10 +156,15 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script>
+      let sortableInstance = null;
+
       function initializeSortable() {
-        var sortables = document.querySelectorAll(".sortable");
-        sortables.forEach(function (sortable) {
-          new Sortable(sortable, {
+        const sortableElement = document.getElementById("shopping-list");
+        if (sortableElement) {
+          if (sortableInstance) {
+            sortableInstance.destroy();
+          }
+          sortableInstance = new Sortable(sortableElement, {
             animation: 150,
             ghostClass: "drag-ghost-class",
             dragClass: "li-drag-class",
@@ -174,7 +179,7 @@
               updateOrder(evt.to);
             },
           });
-        });
+        }
       }
 
       function updateOrder(sortableElement) {
@@ -195,10 +200,18 @@
             if (!response.ok) {
               throw new Error("Network response was not ok");
             }
-            return response.json();
+            // Check if the response has content before trying to parse it
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+              return response.json();
+            } else {
+              return null;
+            }
           })
           .then((data) => {
-            console.log("Order updated:", data);
+            if (data) {
+              console.log("Order updated:", data);
+            }
           })
           .catch((error) => {
             console.error(
