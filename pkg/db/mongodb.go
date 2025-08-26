@@ -13,14 +13,15 @@ import (
 
 // MongoDB represents a MongoDB client connection
 type MongoDB struct {
-	Client *mongo.Client
+	Client       *mongo.Client
+	DatabaseName string
 }
 
 // Ensure MongoDB implements DBInterface
 var _ DBInterface = (*MongoDB)(nil)
 
 // NewMongoDB creates a new MongoDB connection
-func NewMongoDB(uri string) (*MongoDB, error) {
+func NewMongoDB(uri, databaseName string) (*MongoDB, error) {
 	// connect to MongoDB
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	opts := options.Client().ApplyURI(uri).SetServerAPIOptions(serverAPI)
@@ -34,14 +35,14 @@ func NewMongoDB(uri string) (*MongoDB, error) {
 	if err := client.Database("admin").RunCommand(context.TODO(), bson.D{{Key: "ping", Value: 1}}).Err(); err != nil {
 		return nil, err
 	}
-	fmt.Println("Pinged your deployment. You successfully connected to MongoDB!")
+	fmt.Printf("Pinged your deployment. You successfully connected to MongoDB! Using database: %s\n", databaseName)
 
-	return &MongoDB{Client: client}, nil
+	return &MongoDB{Client: client, DatabaseName: databaseName}, nil
 }
 
 // GetShoppingList retrieves the shopping list from the database
 func (m *MongoDB) GetShoppingList() ([]models.ShoppingListItem, error) {
-	collection := m.Client.Database("GoShopping").Collection("shopping-lists")
+	collection := m.Client.Database(m.DatabaseName).Collection("shopping-lists")
 
 	var document struct {
 		ID           primitive.ObjectID        `bson:"_id"`
@@ -88,7 +89,7 @@ func (m *MongoDB) GetShoppingListItemFromIDHex(IDHex string) (models.ShoppingLis
 
 // UpdateMeal updates a meal for a specific day
 func (m *MongoDB) UpdateMeal(day string, meal string) error {
-	collection := m.Client.Database("GoShopping").Collection("meal-plans")
+	collection := m.Client.Database(m.DatabaseName).Collection("meal-plans")
 	filter := bson.D{{Key: "meals", Value: bson.D{{Key: "$elemMatch", Value: bson.D{{Key: "day", Value: day}}}}}}
 	update := bson.D{{Key: "$set", Value: bson.D{{Key: "meals.$.meal", Value: meal}}}}
 	_, err := collection.UpdateOne(context.Background(), filter, update)
@@ -121,7 +122,7 @@ func (m *MongoDB) AddShoppingListItem(itemName string) (models.ShoppingListItem,
 	update := bson.D{{Key: "$push", Value: bson.D{{Key: "ShoppingList", Value: newItem}}}}
 
 	// Execute the update operation
-	_, err := m.Client.Database("GoShopping").Collection("shopping-lists").UpdateOne(context.Background(), filter, update)
+	_, err := m.Client.Database(m.DatabaseName).Collection("shopping-lists").UpdateOne(context.Background(), filter, update)
 	if err != nil {
 		fmt.Printf("Error adding shopping list item: %s\n", err)
 		return models.ShoppingListItem{}, err
@@ -140,7 +141,7 @@ func (m *MongoDB) AddShoppingListIdToShoppingListOrder(itemId string) error {
 	update := bson.D{{Key: "$push", Value: bson.D{{Key: "SortOrder", Value: itemId}}}}
 
 	// Execute the update operation
-	_, err := m.Client.Database("GoShopping").Collection("shopping-lists").UpdateOne(context.Background(), filter, update)
+	_, err := m.Client.Database(m.DatabaseName).Collection("shopping-lists").UpdateOne(context.Background(), filter, update)
 	if err != nil {
 		fmt.Printf("Error adding shopping list item to order: %s\n", err)
 		return err
@@ -151,7 +152,7 @@ func (m *MongoDB) AddShoppingListIdToShoppingListOrder(itemId string) error {
 
 // UpdateShoppingListItem updates an existing shopping list item
 func (m *MongoDB) UpdateShoppingListItem(itemId string, newItem string) (models.ShoppingListItem, error) {
-	collection := m.Client.Database("GoShopping").Collection("shopping-lists")
+	collection := m.Client.Database(m.DatabaseName).Collection("shopping-lists")
 	filter := bson.D{{}}
 	update := bson.D{{Key: "$set", Value: bson.D{{Key: "ShoppingList.$[element].Item", Value: newItem}}}}
 	options := options.UpdateOptions{
@@ -176,7 +177,7 @@ func (m *MongoDB) UpdateShoppingListItem(itemId string, newItem string) (models.
 
 // DeleteShoppingListItem removes an item from the shopping list
 func (m *MongoDB) DeleteShoppingListItem(itemIDHex string) error {
-	collection := m.Client.Database("GoShopping").Collection("shopping-lists")
+	collection := m.Client.Database(m.DatabaseName).Collection("shopping-lists")
 
 	filter := bson.M{}
 	update := bson.M{"$pull": bson.M{"ShoppingList": bson.M{"IDHex": itemIDHex}}}
@@ -208,7 +209,7 @@ func (m *MongoDB) DeleteShoppingListItem(itemIDHex string) error {
 
 // TickShoppingListItem toggles the ticked status of a shopping list item
 func (m *MongoDB) TickShoppingListItem(itemId string, ticked bool) (models.ShoppingListItem, error) {
-	collection := m.Client.Database("GoShopping").Collection("shopping-lists")
+	collection := m.Client.Database(m.DatabaseName).Collection("shopping-lists")
 	filter := bson.D{{}}
 	update := bson.D{{Key: "$set", Value: bson.D{{Key: "ShoppingList.$[element].Ticked", Value: ticked}}}}
 	options := options.UpdateOptions{
@@ -235,7 +236,7 @@ func (m *MongoDB) TickShoppingListItem(itemId string, ticked bool) (models.Shopp
 // GetMealPlan retrieves the meal plan from the database
 func (m *MongoDB) GetMealPlan() (models.MealPlan, error) {
 	// find the first document in the collection
-	collection := m.Client.Database("GoShopping").Collection("meal-plans")
+	collection := m.Client.Database(m.DatabaseName).Collection("meal-plans")
 	// get the first document
 	filter := bson.D{{}}
 	var mealPlan models.MealPlan
@@ -249,7 +250,7 @@ func (m *MongoDB) GetMealPlan() (models.MealPlan, error) {
 
 // SortShoppingList updates the order of items in the shopping list
 func (m *MongoDB) SortShoppingList(newOrder []models.Order) error {
-	collection := m.Client.Database("GoShopping").Collection("shopping-lists")
+	collection := m.Client.Database(m.DatabaseName).Collection("shopping-lists")
 
 	// Create a new array of ObjectIDs in the new order
 	var newSortOrder []primitive.ObjectID

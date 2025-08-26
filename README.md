@@ -44,38 +44,87 @@ A simple meal planner and shopping list application built with Go and HTMX.
 
 ### Prerequisites
 
-- Go (1.16+)
-- MongoDB
+- Go (1.22+)
+- MongoDB Atlas account (or local MongoDB instance)
 
-### Environment Variables
+### Local Development Setup
 
-Set the following environment variable with your MongoDB connection string:
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd mealplannergo
+   ```
 
-```
-export GO_SHOPPING_MONGO_ATLAS_URI="mongodb+srv://your-connection-string"
-```
+2. **Set up environment variables**
+   ```bash
+   # Copy the example environment file
+   cp .env.example .env
+   
+   # Edit .env and add your MongoDB Atlas connection string
+   # GO_SHOPPING_MONGO_ATLAS_URI=mongodb+srv://your-connection-string
+   # GO_ENV=development
+   ```
+
+3. **Install dependencies**
+   ```bash
+   go mod download
+   ```
+
+4. **Set up test database (IMPORTANT for development)**
+   ```bash
+   # This copies your production data to the test database
+   # You only need to do this once, or when you want fresh test data
+   make copy-prod-to-test
+   ```
 
 ### Running the Application
 
+**For Development (Recommended):**
 ```bash
-# Build and run the application
-go build -o app ./cmd/server
-./app
+# Runs with test database (GoShopping-test) - safe for development
+make dev
+```
 
-# Or run directly
-go run ./cmd/server
+**For Production:**
+```bash
+# ⚠️ WARNING: Uses production database (GoShopping)
+make prod
+```
+
+**Alternative ways to run:**
+```bash
+# Using go run directly (development mode)
+GO_ENV=development go run ./cmd/server
+
+# Using go run directly (production mode)  
+GO_ENV=production go run ./cmd/server
 ```
 
 The application will be available at http://localhost:8080.
 
-## Development
+### Environment Modes
+
+- **Development Mode** (`GO_ENV=development`): 
+  - Uses `GoShopping-test` database
+  - Safe for testing new features
+  - Default mode when using `.env` file
+
+- **Production Mode** (`GO_ENV=production`):
+  - Uses `GoShopping` database
+  - ⚠️ **USE WITH CAUTION** - modifies production data
+  - Requires explicit confirmation
+
+### Database Management
 
 ```bash
-# Run with hot reload using air (if installed)
-air -c .air.toml
+# Copy production data to test database
+make copy-prod-to-test
 
-# Or use go run for development
-go run ./cmd/server
+# Run server in development mode (test database)
+make dev
+
+# Run server in production mode (production database)
+make prod
 ```
 
 ## Testing
