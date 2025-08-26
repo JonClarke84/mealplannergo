@@ -5,20 +5,21 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/JonClarke84/mealplannergo/pkg/config"
 	"github.com/JonClarke84/mealplannergo/pkg/db"
 	"github.com/JonClarke84/mealplannergo/pkg/handlers"
 )
 
 func main() {
-	// Get MongoDB connection URI from environment variable
-	mongoURI := os.Getenv("GO_SHOPPING_MONGO_ATLAS_URI")
-	if mongoURI == "" {
-		fmt.Println("Error: GO_SHOPPING_MONGO_ATLAS_URI environment variable is not set")
-		os.Exit(1)
-	}
+	// Load configuration
+	cfg := config.LoadConfig()
+
+	// Display environment information
+	fmt.Printf("Starting server in %s environment\n", cfg.Environment)
+	fmt.Printf("Using database: %s\n", cfg.DatabaseName)
 
 	// Initialize database connection
-	mongoDB, err := db.NewMongoDB(mongoURI)
+	mongoDB, err := db.NewMongoDB(cfg.MongoURI, cfg.DatabaseName)
 	if err != nil {
 		fmt.Printf("Error connecting to MongoDB: %s\n", err)
 		os.Exit(1)
@@ -41,9 +42,8 @@ func main() {
 	http.Handle("/public/", http.StripPrefix("/public/", publicFileServer))
 
 	// Start server
-	port := "8080"
-	fmt.Printf("Server starting on port %s...\n", port)
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
+	fmt.Printf("Server starting on port %s...\n", cfg.Port)
+	if err := http.ListenAndServe(":"+cfg.Port, nil); err != nil {
 		fmt.Printf("Error starting server: %s\n", err)
 		os.Exit(1)
 	}
